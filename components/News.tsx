@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 
+const BP = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
 const posts = [
   {
     slug: "izpit-vro-2026",
@@ -49,7 +51,7 @@ export default function News() {
               {/* Image */}
               <div className="relative h-44 overflow-hidden" style={{ background: "#1a1f2e" }}>
                 <img
-                  src={post.image}
+                  src={`${BP}${post.image}`}
                   alt={post.title}
                   className="w-full h-full object-cover"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}

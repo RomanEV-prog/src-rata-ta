@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+const BP = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 const hours = [
   { day: "PONEDELJEK", time: "ZAPRTO" },
@@ -31,7 +31,8 @@ export default function Footer() {
           {/* Logo + social */}
           <div className="flex flex-col items-center gap-5">
             <Link href="/">
-              <Image src="/logo.png" alt="ŠRC Ra-Ta-Ta" width={48} height={48} className="object-contain" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={`${BP}/logo.png`} alt="ŠRC Ra-Ta-Ta" width={48} height={48} className="object-contain" />
             </Link>
             <div className="flex gap-5">
               <Link href="https://www.facebook.com/src.ratata" target="_blank" className="text-white/50 hover:text-white transition-colors">

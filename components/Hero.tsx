@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+const BP = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
 export default function Hero() {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
@@ -12,7 +14,7 @@ export default function Hero() {
         loop
         playsInline
       >
-        <source src="/hero-bg.mp4" type="video/mp4" />
+        <source src={`${BP}/hero-bg.mp4`} type="video/mp4" />
       </video>
 
       {/* Dark overlay */}
