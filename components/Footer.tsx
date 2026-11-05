@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Logo from "./Logo";
+import Image from "next/image";
 
 const hours = [
   { day: "PONEDELJEK", time: "ZAPRTO" },
@@ -31,7 +31,7 @@ export default function Footer() {
           {/* Logo + social */}
           <div className="flex flex-col items-center gap-5">
             <Link href="/">
-              <Logo size={48} />
+              <Image src="/logo.png" alt="ŠRC Ra-Ta-Ta" width={48} height={48} className="object-contain" />
             </Link>
             <div className="flex gap-5">
               <Link href="https://www.facebook.com/src.ratata" target="_blank" className="text-white/50 hover:text-white transition-colors">

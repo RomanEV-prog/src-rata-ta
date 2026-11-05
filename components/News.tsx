@@ -15,14 +15,14 @@ const posts = [
     category: "izobraževanja",
     title: "Razpis usposabljanja o varnem ravnanju z orožjem",
     excerpt: "V SD Fenix razpisujemo usposabljanje za varno rokovanje z orožjem.",
-    image: "/news/usposabljanje.jpg",
+    image: "/news/usposabljanje.png",
   },
   {
     slug: "Kolektivni-dopust-2026",
     category: "obvestila",
     title: "Kolektivni dopust 22.07 – 10.08.2026",
     excerpt: "Sporočamo vam, da bo strelišče zaradi kolektivnega letnega dopusta zaprto od 22.07.2026 do 10.08.2026.",
-    image: "/news/dopust.jpg",
+    image: "/news/dopust.png",
   },
 ];
 

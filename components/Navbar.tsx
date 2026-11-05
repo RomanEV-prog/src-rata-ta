@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import Logo from "./Logo";
+import Image from "next/image";
 
 const ponudbaLinks = [
   { label: "Paketi", href: "/paketi" },
@@ -30,7 +30,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 shrink-0">
-          <Logo size={32} />
+          <Image src="/logo.png" alt="ŠRC Ra-Ta-Ta" width={32} height={32} className="object-contain" />
         </Link>
 
         {/* Desktop nav */}

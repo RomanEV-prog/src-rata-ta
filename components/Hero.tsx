@@ -3,22 +3,26 @@ import Link from "next/link";
 export default function Hero() {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Background image placeholder – zamenjaj s pravo sliko/videom */}
-      <div
-        className="absolute inset-0 bg-cover bg-center"
-        style={{
-          backgroundImage: "url('/hero-bg.jpg')",
-          filter: "brightness(0.4)",
-        }}
-      />
+      {/* Video ozadje */}
+      <video
+        className="absolute inset-0 w-full h-full object-cover"
+        style={{ filter: "brightness(0.4)" }}
+        autoPlay
+        muted
+        loop
+        playsInline
+      >
+        <source src="/hero-bg.mp4" type="video/mp4" />
+      </video>
+
       {/* Dark overlay */}
-      <div className="absolute inset-0" style={{ background: "rgba(13,15,20,0.5)" }} />
+      <div className="absolute inset-0" style={{ background: "rgba(13,15,20,0.45)" }} />
 
       {/* Content */}
       <div className="relative z-10 text-center px-4">
         <h1
           className="text-6xl sm:text-8xl font-black tracking-tight text-white mb-4 uppercase"
-          style={{ fontFamily: "'Inter', sans-serif", letterSpacing: "-0.02em" }}
+          style={{ letterSpacing: "-0.02em" }}
         >
           ŠRC RA-TA-TA
         </h1>
