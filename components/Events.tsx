@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
 const eventCategories = [
@@ -37,8 +37,14 @@ function getCalendarDays(year: number, month: number) {
 }
 
 export default function Events() {
-  const today = new Date();
-  const [current, setCurrent] = useState({ year: today.getFullYear(), month: today.getMonth() });
+  const [current, setCurrent] = useState({ year: 2026, month: 10 });
+  const [todayKey, setTodayKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    const now = new Date();
+    setCurrent({ year: now.getFullYear(), month: now.getMonth() });
+    setTodayKey(`${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`);
+  }, []);
 
   const { startOffset, daysInMonth } = getCalendarDays(current.year, current.month);
 
@@ -123,10 +129,7 @@ export default function Events() {
               ))}
               {Array.from({ length: daysInMonth }).map((_, i) => {
                 const day = i + 1;
-                const isToday =
-                  day === today.getDate() &&
-                  current.month === today.getMonth() &&
-                  current.year === today.getFullYear();
+                const isToday = todayKey === `${current.year}-${current.month}-${day}`;
                 return (
                   <button
                     key={day}

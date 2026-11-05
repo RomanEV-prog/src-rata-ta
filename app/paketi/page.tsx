@@ -133,9 +133,8 @@ export default function PaketiPage() {
                 className={`rounded-xl overflow-hidden flex flex-col transition-transform hover:-translate-y-1 ${pkg.featured ? "ring-2" : ""}`}
                 style={{
                   background: "#131720",
-                  border: pkg.featured ? "none" : "1px solid rgba(255,255,255,0.08)",
-                  ringColor: pkg.featured ? "#3dba8a" : undefined,
-                  boxShadow: pkg.featured ? "0 0 0 2px #3dba8a" : undefined,
+                  border: pkg.featured ? "2px solid #3dba8a" : "1px solid rgba(255,255,255,0.08)",
+                  boxShadow: pkg.featured ? "0 0 20px rgba(61,186,138,0.15)" : undefined,
                 }}
               >
                 <div className="h-44 overflow-hidden">
