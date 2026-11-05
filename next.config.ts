@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  images: {
+    remotePatterns: [{ hostname: "cms.strelisce-maribor.si" }],
+  },
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {
