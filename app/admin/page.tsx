@@ -23,6 +23,8 @@ export default function AdminPage() {
   const [editing, setEditing] = useState<Partial<NewsPost> | null>(null)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState('')
+  const [liveTargets, setLiveTargets] = useState(true)
+  const [togglingLive, setTogglingLive] = useState(false)
 
   // Obnovi JWT iz sessionStorage
   useEffect(() => {
@@ -35,7 +37,24 @@ export default function AdminPage() {
     if (b.ok) setPosts(b.data)
   }, [])
 
-  useEffect(() => { if (token) fetchNews(token) }, [token, fetchNews])
+  const fetchConfig = useCallback(async () => {
+    try {
+      const r = await fetch(`${API}/public/config`)
+      const b = await r.json()
+      if (b.ok) setLiveTargets(b.data.liveTargetsEnabled)
+    } catch {}
+  }, [])
+
+  useEffect(() => { if (token) { fetchNews(token); fetchConfig() } }, [token, fetchNews, fetchConfig])
+
+  async function toggleLiveTargets(tok: string, val: boolean) {
+    setTogglingLive(true)
+    try {
+      await fetch(`${API}/public/config`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tok}` }, body: JSON.stringify({ liveTargetsEnabled: val }) })
+      setLiveTargets(val)
+    } catch {}
+    setTogglingLive(false)
+  }
 
   async function login() {
     setLoginErr('')
@@ -118,6 +137,23 @@ export default function AdminPage() {
             </button>
             <button onClick={logout} className="px-4 py-2 rounded-xl text-white/50 text-sm hover:text-white border border-white/10">Odjava</button>
           </div>
+        </div>
+
+        {/* Nastavitve */}
+        <div className="mb-6 px-5 py-4 rounded-xl flex items-center justify-between" style={{ background: '#131720', border: '1px solid rgba(255,255,255,0.07)' }}>
+          <div>
+            <div className="text-white font-semibold text-sm">Live tarče na spletni strani</div>
+            <div className="text-white/40 text-xs mt-0.5">Prikaže zadnje posnetke tarč z inicialkami strelcev</div>
+          </div>
+          <button
+            onClick={() => token && toggleLiveTargets(token, !liveTargets)}
+            disabled={togglingLive}
+            className="relative w-12 h-6 rounded-full transition-colors duration-200 disabled:opacity-50"
+            style={{ background: liveTargets ? '#3dba8a' : '#2a2f3d' }}
+          >
+            <span className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200"
+                  style={{ transform: liveTargets ? 'translateX(24px)' : 'translateX(0)' }} />
+          </button>
         </div>
 
         {msg && <div className="mb-4 px-4 py-3 rounded-xl text-sm font-medium" style={{ background: '#1a2a1a', color: '#3dba8a' }}>{msg}</div>}
