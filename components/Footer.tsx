@@ -1,15 +1,84 @@
+'use client'
 import Link from "next/link";
-const BP = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+import { useEffect, useState } from "react";
 
-const hours = [
+const BP = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+const API = "https://rangeos-api.adlerhub.eu";
+
+const DNEVI = ["PONEDELJEK", "TOREK", "SREDA", "ČETRTEK", "PETEK", "SOBOTA", "NEDELJA"];
+
+// Fallback ko API ni dosegljiv
+const FALLBACK = [
   { day: "PONEDELJEK", time: "ZAPRTO" },
-  { day: "TOREK", time: "10–13 IN 15–20" },
-  { day: "SREDA – PETEK", time: "15–20" },
-  { day: "SOBOTA", time: "13:30 – 20" },
+  { day: "TOREK", time: "10:00–13:00 in 15:00–20:00" },
+  { day: "SREDA – PETEK", time: "15:00–20:00" },
+  { day: "SOBOTA", time: "13:30–20:00" },
   { day: "NEDELJA IN PRAZNIKI", time: "ZAPRTO" },
 ];
 
+function hhmm(min: number): string {
+  return `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
+}
+
+interface RangeDay {
+  weekday: number;
+  isOpen: boolean;
+  openMin: number;
+  closeMin: number;
+  open2Min: number | null;
+  close2Min: number | null;
+}
+
+function apiToRows(days: RangeDay[]): { day: string; time: string }[] {
+  // Združi consecutive dneve z enakim urnikom (npr. Sreda–Petek)
+  const rows: { day: string; time: string }[] = [];
+  let i = 0;
+  while (i < days.length) {
+    const d = days[i];
+    const time = !d.isOpen
+      ? "ZAPRTO"
+      : d.open2Min != null
+      ? `${hhmm(d.openMin)}–${hhmm(d.closeMin)} in ${hhmm(d.open2Min)}–${hhmm(d.close2Min!)}`
+      : `${hhmm(d.openMin)}–${hhmm(d.closeMin)}`;
+
+    // Preveri ali naslednji dnevi imajo enak urnik
+    let j = i + 1;
+    while (j < days.length) {
+      const n = days[j];
+      const nt = !n.isOpen
+        ? "ZAPRTO"
+        : n.open2Min != null
+        ? `${hhmm(n.openMin)}–${hhmm(n.closeMin)} in ${hhmm(n.open2Min)}–${hhmm(n.close2Min!)}`
+        : `${hhmm(n.openMin)}–${hhmm(n.closeMin)}`;
+      if (nt !== time) break;
+      j++;
+    }
+
+    const dayLabel =
+      j - i > 1
+        ? `${DNEVI[d.weekday]} – ${DNEVI[days[j - 1].weekday]}`
+        : DNEVI[d.weekday];
+
+    rows.push({ day: dayLabel, time });
+    i = j;
+  }
+  return rows;
+}
+
 export default function Footer() {
+  const [hours, setHours] = useState(FALLBACK);
+
+  useEffect(() => {
+    fetch(`${API}/public/hours`)
+      .then((r) => r.json())
+      .then((body) => {
+        if (body.ok && Array.isArray(body.data) && body.data.length > 0) {
+          setHours(apiToRows(body.data));
+        }
+      })
+      .catch(() => {/* ostane fallback */});
+  }, []);
+
   return (
     <footer style={{ background: "#0a0c10", borderTop: "1px solid rgba(255,255,255,0.07)" }} className="py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
