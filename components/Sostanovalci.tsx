@@ -1,5 +1,3 @@
-const BP = process.env.NEXT_PUBLIC_BASE_PATH ?? ""
-
 const PARTNERJI = [
   {
     ime: "Razgoršek Nepremičnine",
@@ -12,7 +10,7 @@ const PARTNERJI = [
   {
     ime: "SD Fenix",
     opis: "Strelsko društvo",
-    logo: `${BP}/fenix-logo.png`,
+    logo: null,
     barva: "#e67e22",
     ikona: "🦅",
     url: null, // isto mesto — ni zunanjega linka
