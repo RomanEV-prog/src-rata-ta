@@ -19,7 +19,7 @@ const AKTIVNOSTI = [
 
 const PARTNERJI = [
   { ime: "ŠRC Ra-Ta-Ta",         logo: `${BP}/logo.png`,             logoBg: "transparent", url: null },
-  { ime: "SD Fenix",             logo: `${BP}/logos/fenix.jpg`,      logoBg: "#fff",        url: null },
+  { ime: "SD Fenix",             logo: `${BP}/logos/fenix.jpg`,      logoBg: "#fff",        url: "/clanstvo/sd-fenix", intern: true },
   { ime: "Jiujitsu Ambition",    logo: `${BP}/logos/ambition.png`,   logoBg: "#111",        url: "https://mmaribor.si" },
   { ime: "Razgoršek",            logo: `${BP}/logos/razgorsek.png`,  logoBg: "#fff",        url: "https://www.razgorsek.si" },
   { ime: "Roman's Cakes",        logo: `${BP}/logos/romancakes.png`, logoBg: "#1a1200",     url: "https://www.romancakes.com" },
@@ -50,7 +50,7 @@ export default function Hero() {
               const logo = (
                 <div className="flex flex-col items-center gap-2 group cursor-pointer">
                   <div
-                    className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden flex items-center justify-center transition-all duration-200 group-hover:scale-110 group-hover:brightness-125"
+                    className="w-32 h-32 sm:w-40 sm:h-40 rounded-2xl overflow-hidden flex items-center justify-center transition-all duration-200 group-hover:scale-110 group-hover:brightness-125"
                     style={{ background: p.logoBg, border: "1px solid rgba(255,255,255,0.1)" }}
                   >
                     <img src={p.logo} alt={p.ime} className="w-full h-full object-contain p-2" />
@@ -60,9 +60,9 @@ export default function Hero() {
                   </span>
                 </div>
               )
-              return p.url
-                ? <a key={p.ime} href={p.url} target="_blank" rel="noopener noreferrer">{logo}</a>
-                : <div key={p.ime}>{logo}</div>
+              if (!p.url) return <div key={p.ime}>{logo}</div>
+              if ((p as { intern?: boolean }).intern) return <Link key={p.ime} href={p.url}>{logo}</Link>
+              return <a key={p.ime} href={p.url} target="_blank" rel="noopener noreferrer">{logo}</a>
             })}
           </div>
         </div>
