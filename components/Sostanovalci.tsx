@@ -24,7 +24,7 @@ const PARTNERJI = [
     logo: null,
     barva: "#8e44ad",
     ikona: "🥋",
-    url: null, // TODO: dodaj URL
+    url: "https://mmaribor.si",
   },
   {
     ime: "Roman's Cakes",
