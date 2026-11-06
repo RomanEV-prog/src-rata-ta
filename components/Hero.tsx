@@ -13,7 +13,6 @@ const AKTIVNOSTI = [
   { ime: "Ročni nogomet",    href: "/paketi",        barva: "#d35400" },
   { ime: "Mini nogomet",     href: "/paketi",        barva: "#16a085" },
   { ime: "Darts",            href: "/paketi",        barva: "#7f8c8d" },
-  { ime: "Namizni tenis",    href: "/paketi",        barva: "#2980b9" },
   { ime: "Arcade igre",      href: "/paketi",        barva: "#8e44ad" },
 ]
 
