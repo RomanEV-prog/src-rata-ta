@@ -14,7 +14,8 @@ const ponudbaLinks = [
 ];
 
 const clanstvoLinks = [
-  { label: "O članstvu", href: "/clanstvo/sd-fenix" },
+  { label: "O članstvu", href: "/clanstvo" },
+  { label: "Prijava na ligo SD Fenix", href: "/clanstvo/sd-fenix" },
 ];
 
 export default function Navbar() {
@@ -157,7 +158,8 @@ export default function Navbar() {
           <Link href="/o-nas" onClick={() => setMobileOpen(false)}>O nas</Link>
           <Link href="/news-events" onClick={() => setMobileOpen(false)}>Novice, dogodki</Link>
           <Link href="https://trgovina.strelisce-maribor.si" onClick={() => setMobileOpen(false)}>Trgovina</Link>
-          <Link href="/clanstvo/sd-fenix" onClick={() => setMobileOpen(false)}>Članstvo</Link>
+          <Link href="/clanstvo" onClick={() => setMobileOpen(false)}>Članstvo</Link>
+          <Link href="/clanstvo/sd-fenix" onClick={() => setMobileOpen(false)} className="text-white/60 pl-3">— Prijava na ligo</Link>
           <Link href="/kontakt" onClick={() => setMobileOpen(false)}>Kontakt</Link>
           <Link href="/login" onClick={() => setMobileOpen(false)}>Prijava za člane</Link>
         </div>
