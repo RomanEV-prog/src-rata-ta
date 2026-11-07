@@ -1,5 +1,3 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
 const TEDEE_API = "https://api.tedee.com/api/v1.32";
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -11,52 +9,28 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: CORS });
   }
 
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader) {
-    return json({ success: false, message: "Manjka avtentikacija." }, 401);
+  // Validacija QR ključa
+  let key: string | undefined;
+  try {
+    const body = await req.json();
+    key = body?.key;
+  } catch {
+    return json({ success: false, message: "Napačen zahtevek." }, 400);
   }
 
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_ANON_KEY")!,
-    { global: { headers: { Authorization: authHeader } } }
-  );
-
-  const supabaseAdmin = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SRC_SERVICE_ROLE_KEY")!
-  );
-
-  // 1. Preveri JWT in dobi člana
-  const { data: { user }, error: authErr } = await supabase.auth.getUser();
-  if (authErr || !user) {
-    return json({ success: false, message: "Neveljavna seja." }, 401);
+  const doorSecret = Deno.env.get("DOOR_SECRET");
+  if (!doorSecret || key !== doorSecret) {
+    return json({ success: false, message: "Neveljavna QR koda." }, 403);
   }
 
-  // 2. Admin preskoči preverjanje dovoljenja
-  const isAdmin = (user.app_metadata as Record<string, string>)?.role === "admin";
-
-  if (!isAdmin) {
-    const now = new Date().toISOString();
-    const { data: perm } = await supabase
-      .from("access_permissions")
-      .select("id")
-      .eq("member_id", user.id)
-      .eq("is_active", true)
-      .or(`valid_from.is.null,valid_from.lte.${now}`)
-      .or(`valid_until.is.null,valid_until.gte.${now}`)
-      .maybeSingle();
-
-    if (!perm) {
-      await logEvent(supabaseAdmin, user.id, null, "denied_no_permission", null);
-      return json({ success: false, message: "Nimate aktivnega dovoljenja za dostop." }, 403);
-    }
-  }
-
-  // 3. Preveri stanje ključavnice prek Tedee API
   const tedeeToken = Deno.env.get("TEDEE_API_TOKEN")!;
   const lockId = Deno.env.get("TEDEE_LOCK_ID")!;
 
+  // Supabase admin samo za logiranje
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const serviceKey = Deno.env.get("SRC_SERVICE_ROLE_KEY")!;
+
+  // Preveri stanje ključavnice
   let lockState = "unknown";
   try {
     const lockRes = await fetch(`${TEDEE_API}/my/lock/${lockId}`, {
@@ -65,22 +39,21 @@ Deno.serve(async (req) => {
 
     if (!lockRes.ok) {
       const errText = await lockRes.text();
-      await logEvent(supabaseAdmin, user.id, lockState, "error", `Tedee status ${lockRes.status}: ${errText}`);
+      await logEvent(supabaseUrl, serviceKey, lockState, "error", `Tedee status ${lockRes.status}: ${errText}`);
       return json({ success: false, message: "Napaka pri branju stanja ključavnice." }, 502);
     }
 
     const lockData = await lockRes.json();
-    // Tedee lock state: 2 = unlocked, 6 = pulling, ostalo = locked/unknown
-    const state = lockData?.lockProperties?.state;
+    const state = lockData?.result?.lockProperties?.state;
     lockState = state === 2 || state === 6 ? "unlocked" : "locked";
   } catch (e) {
-    await logEvent(supabaseAdmin, user.id, "unknown", "error", String(e));
+    await logEvent(supabaseUrl, serviceKey, "unknown", "error", String(e));
     return json({ success: false, message: "Napaka pri vzpostavljanju povezave s ključavnico." }, 502);
   }
 
-  // 4. Pull Spring samo če je odklenjena
+  // Pull Spring samo če je odklenjena
   if (lockState !== "unlocked") {
-    await logEvent(supabaseAdmin, user.id, lockState, "denied_locked", null);
+    await logEvent(supabaseUrl, serviceKey, lockState, "denied_locked", null);
     return json({
       success: false,
       lockState,
@@ -88,7 +61,7 @@ Deno.serve(async (req) => {
     }, 200);
   }
 
-  // 5. Sproži Pull Spring
+  // Sproži Pull Spring
   try {
     const pullRes = await fetch(`${TEDEE_API}/my/lock/${lockId}/operation/pull`, {
       method: "POST",
@@ -100,31 +73,39 @@ Deno.serve(async (req) => {
 
     if (!pullRes.ok) {
       const errText = await pullRes.text();
-      await logEvent(supabaseAdmin, user.id, lockState, "error", `Pull Spring ${pullRes.status}: ${errText}`);
+      await logEvent(supabaseUrl, serviceKey, lockState, "error", `Pull Spring ${pullRes.status}: ${errText}`);
       return json({ success: false, message: "Pull Spring ni uspel." }, 502);
     }
   } catch (e) {
-    await logEvent(supabaseAdmin, user.id, lockState, "error", String(e));
+    await logEvent(supabaseUrl, serviceKey, lockState, "error", String(e));
     return json({ success: false, message: "Napaka pri izvajanju Pull Spring." }, 502);
   }
 
-  await logEvent(supabaseAdmin, user.id, lockState, "success", null);
+  await logEvent(supabaseUrl, serviceKey, lockState, "success", null);
   return json({ success: true, lockState, message: "Vrata se odpirajo!" }, 200);
 });
 
 async function logEvent(
-  client: ReturnType<typeof createClient>,
-  memberId: string,
+  supabaseUrl: string,
+  serviceKey: string,
   lockState: string | null,
   result: string,
   errorMessage: string | null
 ) {
-  await client.from("door_events").insert({
-    member_id: memberId,
-    lock_state: lockState,
-    result,
-    error_message: errorMessage,
-  });
+  try {
+    await fetch(`${supabaseUrl}/rest/v1/door_events`, {
+      method: "POST",
+      headers: {
+        "apikey": serviceKey,
+        "Authorization": `Bearer ${serviceKey}`,
+        "Content-Type": "application/json",
+        "Prefer": "return=minimal",
+      },
+      body: JSON.stringify({ lock_state: lockState, result, error_message: errorMessage }),
+    });
+  } catch {
+    // logiranje ni kritično
+  }
 }
 
 function json(body: unknown, status: number) {
