@@ -86,7 +86,8 @@ CREATE POLICY "events_select_own" ON door_events FOR SELECT TO authenticated
   USING (member_id = auth.uid() OR (auth.jwt() ->> 'role') = 'admin');
 
 -- Service role piše door_events (prek Edge Function)
-CREATE POLICY "events_insert_service" ON door_events FOR INSERT TO service_role USING (true);
+CREATE POLICY "events_insert_service" ON door_events FOR INSERT TO service_role
+  WITH CHECK (true);
 
 -- Access requests: admin vse
 CREATE POLICY "requests_all_admin" ON access_requests FOR ALL TO authenticated
