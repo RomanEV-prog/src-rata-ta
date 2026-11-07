@@ -9,6 +9,7 @@ const PARTNERJI = [
     logoBg: "transparent",
     url: null,
     domace: true,
+    cta: null,
   },
   {
     ime: "SD Fenix",
@@ -16,8 +17,9 @@ const PARTNERJI = [
     barva: "#e67e22",
     logo: `${BP}/logos/fenix.jpg`,
     logoBg: "#fff",
-    url: null,
-    domace: true,
+    url: "/clanstvo/sd-fenix",
+    domace: false,
+    cta: "Prijavi se →",
   },
   {
     ime: "Jiujitsu Ambition",
@@ -26,6 +28,7 @@ const PARTNERJI = [
     logo: `${BP}/logos/ambition.png`,
     logoBg: "#111",
     url: "https://mmaribor.si",
+    cta: "Prijavi se →",
   },
   {
     ime: "Razgoršek Nepremičnine",
@@ -34,6 +37,7 @@ const PARTNERJI = [
     logo: `${BP}/logos/razgorsek.png`,
     logoBg: "#fff",
     url: "https://www.razgorsek.si",
+    cta: "Obišči spletno stran →",
   },
   {
     ime: "Roman's Cakes",
@@ -42,6 +46,7 @@ const PARTNERJI = [
     logo: `${BP}/logos/romancakes.png`,
     logoBg: "#1a1200",
     url: "https://www.romancakes.com",
+    cta: "Posladkaj se →",
   },
 ]
 
@@ -90,18 +95,21 @@ export default function Sostanovalci() {
                     >
                       Tukaj ste
                     </span>
-                  ) : (
-                    <span className="inline-block mt-2 text-xs font-medium" style={{ color: p.barva }}>
-                      Obišči spletno stran →
+                  ) : p.cta ? (
+                    <span className="inline-block mt-2 text-xs font-semibold" style={{ color: p.barva }}>
+                      {p.cta}
                     </span>
-                  )}
+                  ) : null}
                 </div>
               </div>
             )
 
             if (p.url) {
+              const isExternal = p.url.startsWith("http")
               return (
-                <a key={p.ime} href={p.url} target="_blank" rel="noopener noreferrer" className="block">
+                <a key={p.ime} href={p.url}
+                   {...(isExternal ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                   className="block">
                   {inner}
                 </a>
               )
