@@ -4,8 +4,11 @@ import { useState, useEffect, useCallback } from 'react'
 const API = 'https://rangeos-api.adlerhub.eu'
 
 interface NewsPost { id: number; title: string; excerpt: string | null; content: string | null; category: string; image_url: string | null; slug: string | null; is_published: number; published_at: number }
+interface LigaReg { id: number; first_name: string; last_name: string; email: string; phone: string | null; date_of_birth: number | null; society: string | null; discipline: string | null; note: string | null; status: string; submitted_at: number }
 const KATEGORIJE = ['obvestila', 'izobraževanja', 'novosti', 'dogodki']
 const catColor: Record<string, string> = { 'izobraževanja': '#3dba8a', 'obvestila': '#7a8cc9', 'novosti': '#e67e22', 'dogodki': '#c0392b' }
+const statusColor: Record<string, string> = { new: '#7a8cc9', contacted: '#e67e22', confirmed: '#3dba8a', rejected: '#c0392b' }
+const statusLabel: Record<string, string> = { new: 'Nova', contacted: 'Kontaktiran', confirmed: 'Potrjen → ERP', rejected: 'Zavrnjeno' }
 
 function fmtDate(ms: number) { return new Date(ms).toLocaleDateString('sl-SI', { day: 'numeric', month: 'short', year: 'numeric' }) }
 
@@ -25,6 +28,8 @@ export default function AdminPage() {
   const [msg, setMsg] = useState('')
   const [liveTargets, setLiveTargets] = useState(true)
   const [togglingLive, setTogglingLive] = useState(false)
+  const [tab, setTab] = useState<'novice' | 'liga'>('novice')
+  const [ligaRegs, setLigaRegs] = useState<LigaReg[]>([])
 
   // Obnovi JWT iz sessionStorage
   useEffect(() => {
@@ -45,7 +50,20 @@ export default function AdminPage() {
     } catch {}
   }, [])
 
-  useEffect(() => { if (token) { fetchNews(token); fetchConfig() } }, [token, fetchNews, fetchConfig])
+  const fetchLiga = useCallback(async (tok: string) => {
+    try {
+      const r = await fetch(`${API}/league-registrations`, { headers: { Authorization: `Bearer ${tok}` } })
+      const b = await r.json()
+      if (b.ok) setLigaRegs(b.data)
+    } catch {}
+  }, [])
+
+  useEffect(() => { if (token) { fetchNews(token); fetchConfig(); fetchLiga(token) } }, [token, fetchNews, fetchConfig, fetchLiga])
+
+  async function setLigaStatus(tok: string, id: number, status: string) {
+    await fetch(`${API}/league-registrations/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tok}` }, body: JSON.stringify({ status }) })
+    await fetchLiga(tok)
+  }
 
   async function toggleLiveTargets(tok: string, val: boolean) {
     setTogglingLive(true)
@@ -128,15 +146,26 @@ export default function AdminPage() {
       <div className="max-w-4xl mx-auto px-4 py-10">
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-white font-black text-2xl">Admin — Novice</h1>
-          <div className="flex gap-3">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-white font-black text-2xl">Admin</h1>
+          <button onClick={logout} className="px-4 py-2 rounded-xl text-white/50 text-sm hover:text-white border border-white/10">Odjava</button>
+        </div>
+
+        {/* Zavihki */}
+        <div className="flex gap-2 mb-6">
+          {(['novice', 'liga'] as const).map(t => (
+            <button key={t} onClick={() => setTab(t)}
+              className="px-5 py-2 rounded-xl text-sm font-semibold transition-colors"
+              style={{ background: tab === t ? '#4f6bbd' : '#1a1f2e', color: tab === t ? '#fff' : 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              {t === 'novice' ? 'Novice' : `Prijave na ligo${ligaRegs.filter(r => r.status === 'new').length > 0 ? ` (${ligaRegs.filter(r => r.status === 'new').length})` : ''}`}
+            </button>
+          ))}
+          {tab === 'novice' && (
             <button onClick={() => { setEditing({ ...EMPTY }); setMsg('') }}
-              className="px-4 py-2 rounded-xl text-white text-sm font-semibold hover:brightness-110" style={{ background: '#4f6bbd' }}>
+              className="ml-auto px-4 py-2 rounded-xl text-white text-sm font-semibold hover:brightness-110" style={{ background: '#4f6bbd' }}>
               + Nova novica
             </button>
-            <button onClick={logout} className="px-4 py-2 rounded-xl text-white/50 text-sm hover:text-white border border-white/10">Odjava</button>
-          </div>
+          )}
         </div>
 
         {/* Nastavitve */}
@@ -208,6 +237,57 @@ export default function AdminPage() {
           </div>
         )}
 
+        {/* Zavihek: Prijave na ligo */}
+        {tab === 'liga' && (
+          <div className="space-y-3">
+            {ligaRegs.length === 0 && <p className="text-white/30 text-sm text-center py-10">Ni prijav</p>}
+            {ligaRegs.map(reg => (
+              <div key={reg.id} className="p-4 rounded-xl" style={{ background: '#131720', border: '1px solid rgba(255,255,255,0.07)' }}>
+                <div className="flex items-start gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <span className="text-white font-semibold text-sm">{reg.first_name} {reg.last_name}</span>
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                            style={{ background: (statusColor[reg.status] ?? '#7a8cc9') + '25', color: statusColor[reg.status] ?? '#7a8cc9' }}>
+                        {statusLabel[reg.status] ?? reg.status}
+                      </span>
+                      <span className="text-xs text-white/30 ml-auto">{fmtDate(reg.submitted_at)}</span>
+                    </div>
+                    <div className="text-white/50 text-xs space-y-0.5">
+                      <div>{reg.email}{reg.phone ? ` · ${reg.phone}` : ''}</div>
+                      {reg.society && <div>Društvo: {reg.society}</div>}
+                      {reg.discipline && <div>Disciplina: {reg.discipline}</div>}
+                      {reg.note && <div className="text-white/30 italic">{reg.note}</div>}
+                    </div>
+                  </div>
+                  {token && reg.status !== 'confirmed' && reg.status !== 'rejected' && (
+                    <div className="flex gap-2 flex-shrink-0 flex-wrap">
+                      {reg.status === 'new' && (
+                        <button onClick={() => setLigaStatus(token, reg.id, 'contacted')}
+                          className="px-3 py-1.5 rounded-lg text-xs border border-white/10 text-white/50 hover:text-white">
+                          Kontaktiran
+                        </button>
+                      )}
+                      <button onClick={() => setLigaStatus(token, reg.id, 'confirmed')}
+                        className="px-3 py-1.5 rounded-lg text-xs border font-semibold hover:brightness-110"
+                        style={{ borderColor: '#3dba8a50', color: '#3dba8a' }}>
+                        ✓ Potrdi → ERP
+                      </button>
+                      <button onClick={() => setLigaStatus(token, reg.id, 'rejected')}
+                        className="px-3 py-1.5 rounded-lg text-xs border border-red-500/20 text-red-400/60 hover:text-red-400">
+                        Zavrni
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Zavihek: Novice */}
+        {tab === 'novice' && <>
+
         {/* Seznam novic */}
         <div className="space-y-3">
           {posts.map(post => (
@@ -241,6 +321,8 @@ export default function AdminPage() {
           ))}
           {posts.length === 0 && <p className="text-white/30 text-sm text-center py-10">Ni novic</p>}
         </div>
+        </>}
+
       </div>
     </div>
   )
