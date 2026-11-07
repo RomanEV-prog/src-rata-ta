@@ -33,9 +33,16 @@ export default function AdminPage() {
   const [addLoading, setAddLoading] = useState(false);
   const [tab, setTab] = useState<"members" | "log">("members");
 
+  // Login stanje
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [needsLogin, setNeedsLogin] = useState(false);
+
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!session) { setLoading(false); return; }
+      if (!session) { setNeedsLogin(true); setLoading(false); return; }
       const role = (session.user.app_metadata as Record<string, string>)?.role;
       if (role !== "admin") { setLoading(false); return; }
       setIsAdmin(true);
@@ -43,6 +50,31 @@ export default function AdminPage() {
       setLoading(false);
     });
   }, []);
+
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
+    setLoginError("");
+    setLoginLoading(true);
+    const { data, error } = await supabase.auth.signInWithPassword({ email: loginEmail, password: loginPassword });
+    if (error || !data.session) {
+      setLoginError("Napačen e-naslov ali geslo.");
+      setLoginLoading(false);
+      return;
+    }
+    const role = (data.session.user.app_metadata as Record<string, string>)?.role;
+    if (role !== "admin") {
+      setLoginError("Nimate admin dostopa.");
+      await supabase.auth.signOut();
+      setLoginLoading(false);
+      return;
+    }
+    setNeedsLogin(false);
+    setIsAdmin(true);
+    setLoading(true);
+    await loadData();
+    setLoading(false);
+    setLoginLoading(false);
+  }
 
   async function loadData() {
     // Supabase admin API — klic prek Edge Function ni potreben, service role
@@ -118,7 +150,42 @@ export default function AdminPage() {
   }
 
   if (loading) return <Shell><div className="text-white/50">Nalagam...</div></Shell>;
-  if (!isAdmin) return <Shell><div className="text-red-400">Dostop zavrnjen.</div></Shell>;
+
+  if (needsLogin || !isAdmin) return (
+    <Shell>
+      <div className="max-w-sm mx-auto w-full">
+        <h1 className="text-white text-xl font-bold text-center mb-1">Admin prijava</h1>
+        <p className="text-white/40 text-sm text-center mb-8">ŠRC Ra-Ta-Ta — upravljavski dostop</p>
+        <form onSubmit={handleLogin} className="space-y-4">
+          <input
+            type="email"
+            value={loginEmail}
+            onChange={e => setLoginEmail(e.target.value)}
+            placeholder="E-naslov"
+            required
+            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/25 focus:outline-none focus:border-red-500 transition"
+          />
+          <input
+            type="password"
+            value={loginPassword}
+            onChange={e => setLoginPassword(e.target.value)}
+            placeholder="Geslo"
+            required
+            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/25 focus:outline-none focus:border-red-500 transition"
+          />
+          {loginError && <p className="text-red-400 text-sm text-center">{loginError}</p>}
+          <button
+            type="submit"
+            disabled={loginLoading}
+            className="w-full py-3 rounded-xl font-bold text-white transition disabled:opacity-50"
+            style={{ background: "linear-gradient(135deg, #ff3000, #ff6a00)" }}
+          >
+            {loginLoading ? "Prijavljam..." : "Prijava"}
+          </button>
+        </form>
+      </div>
+    </Shell>
+  );
 
   return (
     <Shell>
