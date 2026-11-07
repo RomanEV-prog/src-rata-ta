@@ -9,7 +9,6 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: CORS });
   }
 
-  // Validacija QR ključa
   let key: string | undefined;
   let openedBy: string | null = null;
   try {
@@ -20,17 +19,34 @@ Deno.serve(async (req) => {
     return json({ success: false, message: "Napačen zahtevek." }, 400);
   }
 
-  const doorSecret = Deno.env.get("DOOR_SECRET");
-  if (!doorSecret || key !== doorSecret) {
-    return json({ success: false, message: "Neveljavna QR koda." }, 403);
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const serviceKey = Deno.env.get("SRC_SERVICE_ROLE_KEY")!;
+
+  // Poiščemo skupino po ključu
+  let groupId: string | null = null;
+  let groupName: string | null = null;
+  try {
+    const groupRes = await fetch(
+      `${supabaseUrl}/rest/v1/door_groups?key=eq.${encodeURIComponent(key ?? "")}&is_active=eq.true&select=id,name`,
+      {
+        headers: {
+          "apikey": serviceKey,
+          "Authorization": `Bearer ${serviceKey}`,
+        },
+      }
+    );
+    const groups = await groupRes.json();
+    if (!Array.isArray(groups) || groups.length === 0) {
+      return json({ success: false, message: "Neveljavna QR koda." }, 403);
+    }
+    groupId = groups[0].id;
+    groupName = groups[0].name;
+  } catch {
+    return json({ success: false, message: "Napaka pri preverjanju dostopa." }, 500);
   }
 
   const tedeeToken = Deno.env.get("TEDEE_API_TOKEN")!;
   const lockId = Deno.env.get("TEDEE_LOCK_ID")!;
-
-  // Supabase admin samo za logiranje
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const serviceKey = Deno.env.get("SRC_SERVICE_ROLE_KEY")!;
 
   // Preveri stanje ključavnice
   let lockState = "unknown";
@@ -41,7 +57,7 @@ Deno.serve(async (req) => {
 
     if (!lockRes.ok) {
       const errText = await lockRes.text();
-      await logEvent(supabaseUrl, serviceKey, lockState, "error", `Tedee status ${lockRes.status}: ${errText}`);
+      await logEvent(supabaseUrl, serviceKey, lockState, "error", `Tedee status ${lockRes.status}: ${errText}`, openedBy, groupId, groupName);
       return json({ success: false, message: "Napaka pri branju stanja ključavnice." }, 502);
     }
 
@@ -49,13 +65,13 @@ Deno.serve(async (req) => {
     const state = lockData?.result?.lockProperties?.state;
     lockState = state === 2 || state === 6 ? "unlocked" : "locked";
   } catch (e) {
-    await logEvent(supabaseUrl, serviceKey, "unknown", "error", String(e));
+    await logEvent(supabaseUrl, serviceKey, "unknown", "error", String(e), openedBy, groupId, groupName);
     return json({ success: false, message: "Napaka pri vzpostavljanju povezave s ključavnico." }, 502);
   }
 
   // Pull Spring samo če je odklenjena
   if (lockState !== "unlocked") {
-    await logEvent(supabaseUrl, serviceKey, lockState, "denied_locked", null, openedBy);
+    await logEvent(supabaseUrl, serviceKey, lockState, "denied_locked", null, openedBy, groupId, groupName);
     return json({
       success: false,
       lockState,
@@ -75,15 +91,15 @@ Deno.serve(async (req) => {
 
     if (!pullRes.ok) {
       const errText = await pullRes.text();
-      await logEvent(supabaseUrl, serviceKey, lockState, "error", `Pull Spring ${pullRes.status}: ${errText}`);
+      await logEvent(supabaseUrl, serviceKey, lockState, "error", `Pull Spring ${pullRes.status}: ${errText}`, openedBy, groupId, groupName);
       return json({ success: false, message: "Pull Spring ni uspel." }, 502);
     }
   } catch (e) {
-    await logEvent(supabaseUrl, serviceKey, lockState, "error", String(e));
+    await logEvent(supabaseUrl, serviceKey, lockState, "error", String(e), openedBy, groupId, groupName);
     return json({ success: false, message: "Napaka pri izvajanju Pull Spring." }, 502);
   }
 
-  await logEvent(supabaseUrl, serviceKey, lockState, "success", null, openedBy);
+  await logEvent(supabaseUrl, serviceKey, lockState, "success", null, openedBy, groupId, groupName);
   return json({ success: true, lockState, message: "Vrata se odpirajo!" }, 200);
 });
 
@@ -94,6 +110,8 @@ async function logEvent(
   result: string,
   errorMessage: string | null,
   openedBy: string | null = null,
+  groupId: string | null = null,
+  groupName: string | null = null,
 ) {
   try {
     await fetch(`${supabaseUrl}/rest/v1/door_events`, {
@@ -104,7 +122,14 @@ async function logEvent(
         "Content-Type": "application/json",
         "Prefer": "return=minimal",
       },
-      body: JSON.stringify({ lock_state: lockState, result, error_message: errorMessage, opened_by: openedBy }),
+      body: JSON.stringify({
+        lock_state: lockState,
+        result,
+        error_message: errorMessage,
+        opened_by: openedBy,
+        group_id: groupId,
+        group_name: groupName,
+      }),
     });
   } catch {
     // logiranje ni kritično
