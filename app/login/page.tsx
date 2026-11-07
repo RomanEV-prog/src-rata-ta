@@ -22,7 +22,7 @@ export default function LoginPage() {
 
         {/* Play Store */}
         <a
-          href="https://play.google.com/store/apps/details?id=si.ratata.rangeos"
+          href="https://play.google.com/store/apps/details?id=com.rangeos.rangeos_mobile"
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-3 w-full px-5 py-3.5 rounded-xl mb-3 transition-all hover:brightness-110"
@@ -42,7 +42,19 @@ export default function LoginPage() {
         </a>
 
         <div
-          className="rounded-xl p-4 mt-6"
+          className="rounded-xl p-4 mt-2 mb-2"
+          style={{ background: 'rgba(230,126,34,0.08)', border: '1px solid rgba(230,126,34,0.2)' }}
+        >
+          <p className="text-xs leading-relaxed" style={{ color: 'rgba(230,126,34,0.9)' }}>
+            Aplikacija je trenutno v zaprtem testiranju. Za dostop pišite na{' '}
+            <a href="mailto:info@strelisce-maribor.si" className="underline underline-offset-2 hover:opacity-80 transition-opacity">
+              info@strelisce-maribor.si
+            </a>
+          </p>
+        </div>
+
+        <div
+          className="rounded-xl p-4 mt-4"
           style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}
         >
           <p className="text-xs text-white/35 leading-relaxed">
