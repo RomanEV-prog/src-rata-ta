@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
 
   const supabaseAdmin = createClient(
     Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    Deno.env.get("SRC_SERVICE_ROLE_KEY")!
   );
 
   // 1. Preveri JWT in dobi člana
@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
   let lockState = "unknown";
   try {
     const lockRes = await fetch(`${TEDEE_API}/my/lock/${lockId}`, {
-      headers: { Authorization: `Bearer ${tedeeToken}` },
+      headers: { Authorization: `PersonalKey ${tedeeToken}` },
     });
 
     if (!lockRes.ok) {
@@ -89,7 +89,7 @@ Deno.serve(async (req) => {
     const pullRes = await fetch(`${TEDEE_API}/my/lock/${lockId}/operation/pull`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${tedeeToken}`,
+        Authorization: `PersonalKey ${tedeeToken}`,
         "Content-Type": "application/json",
       },
     });
