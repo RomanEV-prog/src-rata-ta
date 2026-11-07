@@ -203,7 +203,7 @@ export default function DostopPage() {
         )}
 
         {/* Gumb za odpiranje */}
-        {hasPermission === false ? (
+        {hasPermission === false && !isAdmin ? (
           <div className="rounded-2xl p-8 mb-6" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)" }}>
             <div className="text-4xl mb-3">⛔</div>
             <p className="text-red-400 font-semibold">Nimate aktivnega dostopa</p>
