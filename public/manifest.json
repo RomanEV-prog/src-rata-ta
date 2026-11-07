@@ -1,0 +1,25 @@
+{
+  "name": "ŠRC Ra-Ta-Ta — Dostop",
+  "short_name": "ŠRC Dostop",
+  "description": "Odpiranje vhodnih vrat ŠRC Ra-Ta-Ta",
+  "start_url": "/src-rata-ta/dostop",
+  "scope": "/src-rata-ta/dostop",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#ff3000",
+  "background_color": "#050505",
+  "icons": [
+    {
+      "src": "/src-rata-ta/icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/src-rata-ta/icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
