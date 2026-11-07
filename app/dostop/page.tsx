@@ -13,12 +13,23 @@ export default function DostopPage() {
   const [nameInput, setNameInput] = useState("");
 
   useEffect(() => {
-    const hash = window.location.hash.slice(1);
-    setHasKey(!!hash);
     try {
-      const saved = localStorage.getItem("src_dostop_name");
-      if (saved) { setName(saved); setNameSet(true); }
-    } catch { /* localStorage ni dostopen */ }
+      // Ob skeniranju QR kode shranimo ključ v localStorage
+      const hash = window.location.hash.slice(1);
+      if (hash) {
+        localStorage.setItem("src_dostop_key", hash);
+        // Počistimo hash iz URL-ja brez reload-a
+        history.replaceState(null, "", window.location.pathname);
+      }
+      const savedKey = localStorage.getItem("src_dostop_key");
+      setHasKey(!!savedKey);
+
+      const savedName = localStorage.getItem("src_dostop_name");
+      if (savedName) { setName(savedName); setNameSet(true); }
+    } catch {
+      const hash = window.location.hash.slice(1);
+      setHasKey(!!hash);
+    }
   }, []);
 
   function handleNameSubmit(e: React.FormEvent) {
@@ -31,7 +42,9 @@ export default function DostopPage() {
   }
 
   async function handlePullSpring() {
-    const key = window.location.hash.slice(1);
+    let key: string | null = null;
+    try { key = localStorage.getItem("src_dostop_key"); } catch { /* nič */ }
+    if (!key) key = window.location.hash.slice(1);
     if (!key) { setDoorStatus("no_key"); return; }
 
     setDoorStatus("loading");
