@@ -11,9 +11,11 @@ Deno.serve(async (req) => {
 
   // Validacija QR ključa
   let key: string | undefined;
+  let openedBy: string | null = null;
   try {
     const body = await req.json();
     key = body?.key;
+    openedBy = body?.name ?? null;
   } catch {
     return json({ success: false, message: "Napačen zahtevek." }, 400);
   }
@@ -53,7 +55,7 @@ Deno.serve(async (req) => {
 
   // Pull Spring samo če je odklenjena
   if (lockState !== "unlocked") {
-    await logEvent(supabaseUrl, serviceKey, lockState, "denied_locked", null);
+    await logEvent(supabaseUrl, serviceKey, lockState, "denied_locked", null, openedBy);
     return json({
       success: false,
       lockState,
@@ -81,7 +83,7 @@ Deno.serve(async (req) => {
     return json({ success: false, message: "Napaka pri izvajanju Pull Spring." }, 502);
   }
 
-  await logEvent(supabaseUrl, serviceKey, lockState, "success", null);
+  await logEvent(supabaseUrl, serviceKey, lockState, "success", null, openedBy);
   return json({ success: true, lockState, message: "Vrata se odpirajo!" }, 200);
 });
 
@@ -90,7 +92,8 @@ async function logEvent(
   serviceKey: string,
   lockState: string | null,
   result: string,
-  errorMessage: string | null
+  errorMessage: string | null,
+  openedBy: string | null = null,
 ) {
   try {
     await fetch(`${supabaseUrl}/rest/v1/door_events`, {
@@ -101,7 +104,7 @@ async function logEvent(
         "Content-Type": "application/json",
         "Prefer": "return=minimal",
       },
-      body: JSON.stringify({ lock_state: lockState, result, error_message: errorMessage }),
+      body: JSON.stringify({ lock_state: lockState, result, error_message: errorMessage, opened_by: openedBy }),
     });
   } catch {
     // logiranje ni kritično

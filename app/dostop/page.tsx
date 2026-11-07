@@ -8,11 +8,27 @@ export default function DostopPage() {
   const [doorStatus, setDoorStatus] = useState<DoorStatus>("idle");
   const [doorMessage, setDoorMessage] = useState("");
   const [hasKey, setHasKey] = useState<boolean | null>(null);
+  const [name, setName] = useState("");
+  const [nameSet, setNameSet] = useState(false);
+  const [nameInput, setNameInput] = useState("");
 
   useEffect(() => {
     const hash = window.location.hash.slice(1);
     setHasKey(!!hash);
+    try {
+      const saved = localStorage.getItem("src_dostop_name");
+      if (saved) { setName(saved); setNameSet(true); }
+    } catch { /* localStorage ni dostopen */ }
   }, []);
+
+  function handleNameSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const n = nameInput.trim();
+    if (!n) return;
+    setName(n);
+    setNameSet(true);
+    try { localStorage.setItem("src_dostop_name", n); } catch { /* nič */ }
+  }
 
   async function handlePullSpring() {
     const key = window.location.hash.slice(1);
@@ -31,7 +47,7 @@ export default function DostopPage() {
             "apikey": process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
             "Authorization": `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
           },
-          body: JSON.stringify({ key }),
+          body: JSON.stringify({ key, name: name || null }),
         }
       );
       const data = await res.json();
@@ -66,28 +82,56 @@ export default function DostopPage() {
     );
   }
 
-  // Neveljavna / manjkajoča QR koda
+  // Neveljavna QR koda
   if (!hasKey) {
     return (
       <Shell>
         <div className="max-w-sm mx-auto w-full text-center">
           <div className="text-5xl mb-4">📱</div>
           <h1 className="text-white text-xl font-bold mb-2">Skenirajte QR kodo</h1>
-          <p className="text-white/40 text-sm">
-            Za dostop skenirajte QR kodo pri vhodu v strelišče.
-          </p>
+          <p className="text-white/40 text-sm">Za dostop skenirajte QR kodo pri vhodu v strelišče.</p>
+        </div>
+      </Shell>
+    );
+  }
+
+  // Vnos imena (samo prvič)
+  if (!nameSet) {
+    return (
+      <Shell>
+        <div className="max-w-sm mx-auto w-full">
+          <h1 className="text-white text-xl font-bold text-center mb-2">Dobrodošli</h1>
+          <p className="text-white/40 text-sm text-center mb-8">Vnesite svoje ime — samo prvič.</p>
+          <form onSubmit={handleNameSubmit} className="space-y-4">
+            <input
+              type="text"
+              value={nameInput}
+              onChange={e => setNameInput(e.target.value)}
+              placeholder="Ime in priimek"
+              autoFocus
+              required
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-white text-lg placeholder-white/20 focus:outline-none focus:border-red-500 transition"
+            />
+            <button
+              type="submit"
+              className="w-full py-4 rounded-xl font-bold text-white text-lg transition"
+              style={{ background: "linear-gradient(135deg, #ff3000, #ff6a00)" }}
+            >
+              Naprej →
+            </button>
+          </form>
         </div>
       </Shell>
     );
   }
 
   const statusConfig: Record<DoorStatus, { bg: string; icon: string; label: string }> = {
-    idle:       { bg: "linear-gradient(135deg, #ff3000, #ff6a00)", icon: "🚪", label: "ODPRI VRATA" },
-    loading:    { bg: "rgba(255,48,0,0.4)",                        icon: "⏳", label: "Pošiljam ukaz..." },
-    success:    { bg: "linear-gradient(135deg, #22c55e, #16a34a)", icon: "✅", label: "VRATA SE ODPIRAJO" },
-    locked:     { bg: "rgba(100,100,100,0.5)",                     icon: "🔒", label: "ZAKLENJENA" },
-    no_key:     { bg: "rgba(239,68,68,0.3)",                       icon: "⛔", label: "NEVELJAVNA KODA" },
-    error:      { bg: "rgba(239,68,68,0.3)",                       icon: "⚠️", label: "NAPAKA" },
+    idle:    { bg: "linear-gradient(135deg, #ff3000, #ff6a00)", icon: "🚪", label: "ODPRI VRATA" },
+    loading: { bg: "rgba(255,48,0,0.4)",                        icon: "⏳", label: "Pošiljam ukaz..." },
+    success: { bg: "linear-gradient(135deg, #22c55e, #16a34a)", icon: "✅", label: "VRATA SE ODPIRAJO" },
+    locked:  { bg: "rgba(100,100,100,0.5)",                     icon: "🔒", label: "ZAKLENJENA" },
+    no_key:  { bg: "rgba(239,68,68,0.3)",                       icon: "⛔", label: "NEVELJAVNA KODA" },
+    error:   { bg: "rgba(239,68,68,0.3)",                       icon: "⚠️", label: "NAPAKA" },
   };
 
   const sc = statusConfig[doorStatus];
@@ -95,6 +139,16 @@ export default function DostopPage() {
   return (
     <Shell>
       <div className="max-w-sm mx-auto w-full text-center">
+        <p className="text-white/30 text-sm mb-6">
+          {name}
+          <button
+            onClick={() => { setNameSet(false); setNameInput(name); }}
+            className="ml-2 text-white/20 hover:text-white/50 text-xs transition"
+          >
+            ✎
+          </button>
+        </p>
+
         <button
           onClick={handlePullSpring}
           disabled={doorStatus === "loading" || doorStatus === "success"}
@@ -114,9 +168,7 @@ export default function DostopPage() {
           </p>
         )}
 
-        <p className="text-white/20 text-xs mt-5">
-          Gumb deluje samo, ko so vrata odklenjena.
-        </p>
+        <p className="text-white/20 text-xs mt-5">Gumb deluje samo, ko so vrata odklenjena.</p>
       </div>
     </Shell>
   );
