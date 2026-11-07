@@ -33,20 +33,24 @@ Deno.serve(async (req) => {
     return json({ success: false, message: "Neveljavna seja." }, 401);
   }
 
-  // 2. Preveri dovoljenje dostopa
-  const now = new Date().toISOString();
-  const { data: perm } = await supabase
-    .from("access_permissions")
-    .select("id")
-    .eq("member_id", user.id)
-    .eq("is_active", true)
-    .or(`valid_from.is.null,valid_from.lte.${now}`)
-    .or(`valid_until.is.null,valid_until.gte.${now}`)
-    .maybeSingle();
+  // 2. Admin preskoči preverjanje dovoljenja
+  const isAdmin = (user.app_metadata as Record<string, string>)?.role === "admin";
 
-  if (!perm) {
-    await logEvent(supabaseAdmin, user.id, null, "denied_no_permission", null);
-    return json({ success: false, message: "Nimate aktivnega dovoljenja za dostop." }, 403);
+  if (!isAdmin) {
+    const now = new Date().toISOString();
+    const { data: perm } = await supabase
+      .from("access_permissions")
+      .select("id")
+      .eq("member_id", user.id)
+      .eq("is_active", true)
+      .or(`valid_from.is.null,valid_from.lte.${now}`)
+      .or(`valid_until.is.null,valid_until.gte.${now}`)
+      .maybeSingle();
+
+    if (!perm) {
+      await logEvent(supabaseAdmin, user.id, null, "denied_no_permission", null);
+      return json({ success: false, message: "Nimate aktivnega dovoljenja za dostop." }, 403);
+    }
   }
 
   // 3. Preveri stanje ključavnice prek Tedee API
