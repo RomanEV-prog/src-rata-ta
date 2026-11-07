@@ -47,8 +47,8 @@ export default function LoginPage() {
         >
           <p className="text-xs leading-relaxed" style={{ color: 'rgba(230,126,34,0.9)' }}>
             Aplikacija je trenutno v zaprtem testiranju. Za dostop pišite na{' '}
-            <a href="mailto:info@strelisce-maribor.si" className="underline underline-offset-2 hover:opacity-80 transition-opacity">
-              info@strelisce-maribor.si
+            <a href="mailto:info@adlerhub.eu" className="underline underline-offset-2 hover:opacity-80 transition-opacity">
+              info@adlerhub.eu
             </a>
           </p>
         </div>
