@@ -1,9 +1,14 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import emailjs from '@emailjs/browser'
 
 const BP = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
 const API = 'https://rangeos-api.adlerhub.eu'
+
+const EJS_SERVICE  = process.env.NEXT_PUBLIC_EJS_SERVICE  ?? ''
+const EJS_TEMPLATE = process.env.NEXT_PUBLIC_EJS_TEMPLATE ?? ''
+const EJS_KEY      = process.env.NEXT_PUBLIC_EJS_KEY      ?? ''
 
 const DISCIPLINE = [
   'Pištola/revolver s središčnim vžigom 15m (samo začetniki)',
@@ -59,19 +64,36 @@ export default function SdFenixPage() {
     }
     setSending(true)
     try {
-      const r = await fetch(`${API}/public/league-registration`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...form,
-          date_of_birth: isoToMs(form.date_of_birth),
-        }),
-      })
-      const b = await r.json()
-      if (!b.ok) { setErr(b.message ?? 'Napaka'); return }
+      // Shrani v rangeos bazo (ne blokira pri napaki)
+      try {
+        const r = await fetch(`${API}/public/league-registration`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...form, date_of_birth: isoToMs(form.date_of_birth) }),
+        })
+        const b = await r.json()
+        if (!b.ok) console.warn('rangeos-api:', b.message)
+      } catch (e) { console.warn('rangeos-api nedosegljiv:', e) }
+
+      // Pošlji email obvestilo klubu + potrdilo prijavitelju
+      if (EJS_SERVICE && EJS_TEMPLATE && EJS_KEY) {
+        await emailjs.send(EJS_SERVICE, EJS_TEMPLATE, {
+          ime:        form.first_name,
+          priimek:    form.last_name,
+          email:      form.email,
+          telefon:    form.phone       || '—',
+          rojstvo:    form.date_of_birth || '—',
+          drustvo:    form.society     || '—',
+          disciplina: form.discipline  || '—',
+          opomba:     form.note        || '—',
+        }, EJS_KEY)
+      }
+
       setDone(true)
-    } catch { setErr('Strežnik ni dosegljiv. Pokliči nas.') }
-    finally { setSending(false) }
+    } catch (e) {
+      console.error(e)
+      setErr('Napaka pri pošiljanju. Pokliči nas.')
+    } finally { setSending(false) }
   }
 
   return (
