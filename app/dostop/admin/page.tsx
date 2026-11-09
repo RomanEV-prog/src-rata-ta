@@ -21,6 +21,13 @@ type DoorGroup = {
   created_at: string;
 };
 
+type DoorAutomation = {
+  id: string;
+  is_day_mode: boolean;
+  last_checked_at: string | null;
+  last_state: string | null;
+};
+
 const BASE_URL = "https://romanev-prog.github.io/src-rata-ta/dostop";
 
 export default function AdminPage() {
@@ -28,7 +35,8 @@ export default function AdminPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [events, setEvents] = useState<DoorEvent[]>([]);
   const [groups, setGroups] = useState<DoorGroup[]>([]);
-  const [tab, setTab] = useState<"groups" | "events">("groups");
+  const [automation, setAutomation] = useState<DoorAutomation | null>(null);
+  const [tab, setTab] = useState<"groups" | "events" | "automation">("groups");
 
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -46,7 +54,7 @@ export default function AdminPage() {
       const role = (session.user.app_metadata as Record<string, string>)?.role;
       if (role !== "admin") { setNeedsLogin(true); setLoading(false); return; }
       setIsAdmin(true);
-      await Promise.all([loadGroups(), loadEvents()]);
+      await Promise.all([loadGroups(), loadEvents(), loadAutomation()]);
       setLoading(false);
     });
   }, []);
@@ -71,7 +79,7 @@ export default function AdminPage() {
     setNeedsLogin(false);
     setIsAdmin(true);
     setLoading(true);
-    await Promise.all([loadGroups(), loadEvents()]);
+    await Promise.all([loadGroups(), loadEvents(), loadAutomation()]);
     setLoading(false);
     setLoginLoading(false);
   }
@@ -91,6 +99,26 @@ export default function AdminPage() {
       .order("requested_at", { ascending: false })
       .limit(100);
     setEvents(data ?? []);
+  }
+
+  async function loadAutomation() {
+    const { data } = await supabase
+      .from("door_automation")
+      .select("*")
+      .limit(1);
+    if (data && data.length > 0) {
+      setAutomation(data[0]);
+    }
+  }
+
+  async function handleToggleDayMode() {
+    if (!automation) return;
+    const newMode = !automation.is_day_mode;
+    await supabase
+      .from("door_automation")
+      .update({ is_day_mode: newMode })
+      .eq("id", automation.id);
+    await loadAutomation();
   }
 
   async function handleAddGroup(e: React.FormEvent) {
@@ -190,6 +218,12 @@ export default function AdminPage() {
           >
             Dnevnik
           </button>
+          <button
+            onClick={() => setTab("automation")}
+            className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${tab === "automation" ? "bg-blue-600 text-white" : "text-white/40 hover:text-white/70"}`}
+          >
+            Avtomatika
+          </button>
         </div>
 
         {/* SKUPNE */}
@@ -283,6 +317,54 @@ export default function AdminPage() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* AVTOMATIKA */}
+        {tab === "automation" && automation && (
+          <div className="space-y-4">
+            <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-white font-semibold mb-1">Dnevni način</p>
+                  <p className="text-white/40 text-sm">Vrata ostajajo odklenjena, člani jih odpirajo s Pull Spring</p>
+                </div>
+                <button
+                  onClick={handleToggleDayMode}
+                  className={`px-4 py-2 rounded-lg font-bold text-sm transition ${
+                    automation.is_day_mode
+                      ? "bg-green-500/20 text-green-400 hover:bg-red-500/20 hover:text-red-400"
+                      : "bg-gray-500/20 text-gray-400 hover:bg-green-500/20 hover:text-green-400"
+                  }`}
+                >
+                  {automation.is_day_mode ? "🟢 AKTIVNO" : "⚪ IZKLJUČENO"}
+                </button>
+              </div>
+
+              <div className="bg-black/30 rounded-lg p-3 space-y-2">
+                <div className="flex justify-between text-xs">
+                  <span className="text-white/40">Zadnji pregled:</span>
+                  <span className="text-white/60">
+                    {automation.last_checked_at
+                      ? new Date(automation.last_checked_at).toLocaleString("sl-SI")
+                      : "Še ni"}
+                  </span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-white/40">Stanje:</span>
+                  <span className="text-white/60 font-mono">{automation.last_state || "—"}</span>
+                </div>
+              </div>
+
+              <div className="mt-4 bg-blue-500/10 border border-blue-500/20 rounded-lg px-3 py-2 text-xs text-blue-200">
+                <strong>Kako deluje:</strong>
+                <ul className="mt-2 space-y-1 text-blue-300/80">
+                  <li>• Ob aktivaciji: vrata ostajajo odklenjena</li>
+                  <li>• Če se zakljenejo: avtomatsko ponovno odklene</li>
+                  <li>• Ob 22:00: avtomatsko zaklene in izključi</li>
+                </ul>
+              </div>
+            </div>
           </div>
         )}
       </div>

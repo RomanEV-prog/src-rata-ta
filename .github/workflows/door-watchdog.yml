@@ -1,0 +1,19 @@
+name: Door Watchdog
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  watchdog:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger door-watchdog function
+        run: |
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -d '{}' \
+            https://vlzyrcdrvvhxvdvuxgki.supabase.co/functions/v1/door-watchdog
