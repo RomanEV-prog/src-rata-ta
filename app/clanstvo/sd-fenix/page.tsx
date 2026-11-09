@@ -29,6 +29,7 @@ export default function SdFenixPage() {
   const [sending, setSending] = useState(false)
   const [done, setDone] = useState(false)
   const [err, setErr] = useState('')
+  const [pravilaPrebrana, setPravilaPrebrana] = useState(false)
 
   const inp = 'w-full rounded-xl px-4 py-3 text-sm text-white outline-none focus:ring-1 focus:ring-blue-400'
   const inpStyle = { background: '#1a1f2e', border: '1px solid rgba(255,255,255,0.1)' }
@@ -38,6 +39,9 @@ export default function SdFenixPage() {
     setErr('')
     if (!form.first_name || !form.last_name || !form.email) {
       setErr('Ime, priimek in e-mail so obvezni.'); return
+    }
+    if (!pravilaPrebrana) {
+      setErr('Pred oddajo prijavnice morate potrditi, da ste prebrali pravila lige.'); return
     }
     setSending(true)
     try {
@@ -165,9 +169,46 @@ export default function SdFenixPage() {
               </div>
             </div>
 
+            {/* Pravila + checkbox */}
+            <div className="mb-5 p-4 rounded-xl" style={{ background: '#0d0f14', border: '1px solid rgba(255,255,255,0.07)' }}>
+              <div className="flex items-start gap-3 mb-3">
+                <svg className="w-5 h-5 mt-0.5 shrink-0" style={{ color: '#7a8cc9' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <div>
+                  <p className="text-white/70 text-xs leading-relaxed mb-2">
+                    Pred oddajo prijavnice si preberite pravila Zimske lige Fenix 2026/2027.
+                  </p>
+                  <a
+                    href={`${BP}/pravila-zimske-lige-fenix.pdf`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold transition-all hover:brightness-125"
+                    style={{ color: '#7a8cc9' }}
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Odpri pravila (PDF)
+                  </a>
+                </div>
+              </div>
+              <label className="flex items-start gap-3 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={pravilaPrebrana}
+                  onChange={e => setPravilaPrebrana(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 shrink-0 rounded accent-blue-500 cursor-pointer"
+                />
+                <span className="text-xs text-white/60 group-hover:text-white/80 transition-colors leading-relaxed">
+                  Prebral/a sem pravila Zimske lige Fenix 2026/2027 in se z njimi strinjam.
+                </span>
+              </label>
+            </div>
+
             {err && <p className="text-red-400 text-xs mb-4">{err}</p>}
 
-            <button onClick={oddaj} disabled={sending}
+            <button onClick={oddaj} disabled={sending || !pravilaPrebrana}
                     className="w-full py-3.5 rounded-xl text-white font-semibold text-sm disabled:opacity-40 hover:brightness-110 transition-all"
                     style={{ background: '#4f6bbd' }}>
               {sending ? 'Pošiljam…' : 'Pošlji prijavo'}
