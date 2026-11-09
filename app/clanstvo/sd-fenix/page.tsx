@@ -6,13 +6,10 @@ const BP = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
 const API = 'https://rangeos-api.adlerhub.eu'
 
 const DISCIPLINE = [
-  'Pištola standardna',
-  'Pištola brzostrelnost',
-  'Pištola Service',
-  'Puška standardna',
-  'Puška 10m',
-  'Revolverist',
-  'Drugo',
+  'Pištola/revolver s središčnim vžigom 15m (samo začetniki)',
+  'Pištola s središčnim vžigom 25m dvoročno',
+  'Revolver s središčnim vžigom 25m enoročno',
+  'Pištola/revolver standardna cal. .22 L.R., 25m enoročno',
 ]
 
 function isoToMs(iso: string): number | null {
