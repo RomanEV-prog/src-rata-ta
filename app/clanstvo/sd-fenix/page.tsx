@@ -17,6 +17,36 @@ const DISCIPLINE = [
   'Pištola/revolver standardna cal. .22 L.R., 25m enoročno',
 ]
 
+function buildPrijavnicaHtml(d: {
+  ime: string; priimek: string; email: string; telefon: string
+  rojstvo: string; drustvo: string; disciplina: string; opomba: string; cas: string
+}): string {
+  const row = (label: string, val: string) =>
+    `<tr><td style="padding:8px 12px;background:#f5f5f5;font-weight:600;color:#333;width:160px;border-bottom:1px solid #ddd">${label}</td><td style="padding:8px 12px;color:#222;border-bottom:1px solid #ddd">${val}</td></tr>`
+  return `
+<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+  <div style="background:#1a2540;padding:24px 28px;border-radius:8px 8px 0 0">
+    <h2 style="color:#fff;margin:0;font-size:20px">SD Fenix — Prijava na ligo</h2>
+    <p style="color:rgba(255,255,255,0.6);margin:4px 0 0;font-size:13px">Strelsko društvo · Maribor · ŠRC Ra-Ta-Ta</p>
+  </div>
+  <table style="width:100%;border-collapse:collapse;border:1px solid #ddd;border-top:none">
+    ${row('Ime', d.ime)}
+    ${row('Priimek', d.priimek)}
+    ${row('E-mail', d.email)}
+    ${row('Telefon', d.telefon)}
+    ${row('Datum rojstva', d.rojstvo)}
+    ${row('Društvo', d.drustvo)}
+    ${row('Disciplina', d.disciplina)}
+    ${row('Opomba', d.opomba)}
+    <tr><td style="padding:8px 12px;background:#f5f5f5;font-weight:600;color:#333;border-bottom:1px solid #ddd">Pravila prebrana</td>
+        <td style="padding:8px 12px;color:#1a7a40;font-weight:700;border-bottom:1px solid #ddd">✅ Da — potrjeno ob oddaji spletnega obrazca</td></tr>
+  </table>
+  <div style="background:#f9f9f9;padding:14px 16px;border:1px solid #ddd;border-top:none;border-radius:0 0 8px 8px;font-size:12px;color:#888">
+    Oddano: ${d.cas} · Vir: spletni obrazec strelisce-maribor.si (sistem je preveril potrditev pravil)
+  </div>
+</div>`
+}
+
 function isoToMs(iso: string): number | null {
   if (!iso) return null
   const ms = new Date(iso).getTime()
@@ -77,15 +107,29 @@ export default function SdFenixPage() {
 
       // Pošlji email obvestilo klubu + potrdilo prijavitelju
       if (EJS_SERVICE && EJS_TEMPLATE && EJS_KEY) {
+        const cas = new Date().toLocaleString('sl-SI', { timeZone: 'Europe/Ljubljana' })
         await emailjs.send(EJS_SERVICE, EJS_TEMPLATE, {
-          ime:        form.first_name,
-          priimek:    form.last_name,
-          email:      form.email,
-          telefon:    form.phone       || '—',
-          rojstvo:    form.date_of_birth || '—',
-          drustvo:    form.society     || '—',
-          disciplina: form.discipline  || '—',
-          opomba:     form.note        || '—',
+          ime:              form.first_name,
+          priimek:          form.last_name,
+          email:            form.email,
+          telefon:          form.phone        || '—',
+          rojstvo:          form.date_of_birth || '—',
+          drustvo:          form.society      || '—',
+          disciplina:       form.discipline   || '—',
+          opomba:           form.note         || '—',
+          pravila_prebrana: '✅ Da — potrjeno ob oddaji spletnega obrazca',
+          cas_oddaje:       cas,
+          html_prijavnica:  buildPrijavnicaHtml({
+            ime:        form.first_name,
+            priimek:    form.last_name,
+            email:      form.email,
+            telefon:    form.phone        || '—',
+            rojstvo:    form.date_of_birth || '—',
+            drustvo:    form.society      || '—',
+            disciplina: form.discipline   || '—',
+            opomba:     form.note         || '—',
+            cas,
+          }),
         }, EJS_KEY)
       }
 
