@@ -1,14 +1,10 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import emailjs from '@emailjs/browser'
 
-const BP = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
-const API = 'https://rangeos-api.adlerhub.eu'
-
-const EJS_SERVICE  = process.env.NEXT_PUBLIC_EJS_SERVICE  ?? ''
-const EJS_TEMPLATE = process.env.NEXT_PUBLIC_EJS_TEMPLATE ?? ''
-const EJS_KEY      = process.env.NEXT_PUBLIC_EJS_KEY      ?? ''
+const BP          = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
+const API         = 'https://rangeos-api.adlerhub.eu'
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
 
 const DISCIPLINE = [
   'Pištola/revolver s središčnim vžigom 15m (samo začetniki)',
@@ -105,32 +101,15 @@ export default function SdFenixPage() {
         if (!b.ok) console.warn('rangeos-api:', b.message)
       } catch (e) { console.warn('rangeos-api nedosegljiv:', e) }
 
-      // Pošlji email obvestilo klubu + potrdilo prijavitelju
-      if (EJS_SERVICE && EJS_TEMPLATE && EJS_KEY) {
-        const cas = new Date().toLocaleString('sl-SI', { timeZone: 'Europe/Ljubljana' })
-        await emailjs.send(EJS_SERVICE, EJS_TEMPLATE, {
-          ime:              form.first_name,
-          priimek:          form.last_name,
-          email:            form.email,
-          telefon:          form.phone        || '—',
-          rojstvo:          form.date_of_birth || '—',
-          drustvo:          form.society      || '—',
-          disciplina:       form.discipline   || '—',
-          opomba:           form.note         || '—',
-          pravila_prebrana: '✅ Da — potrjeno ob oddaji spletnega obrazca',
-          cas_oddaje:       cas,
-          html_prijavnica:  buildPrijavnicaHtml({
-            ime:        form.first_name,
-            priimek:    form.last_name,
-            email:      form.email,
-            telefon:    form.phone        || '—',
-            rojstvo:    form.date_of_birth || '—',
-            drustvo:    form.society      || '—',
-            disciplina: form.discipline   || '—',
-            opomba:     form.note         || '—',
-            cas,
-          }),
-        }, EJS_KEY)
+      // Pošlji izpolnjeno prijavnico PDF po emailu prek Supabase Edge Function
+      if (SUPABASE_URL) {
+        const fnRes = await fetch(`${SUPABASE_URL}/functions/v1/send-registration`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(form),
+        })
+        const fnBody = await fnRes.json()
+        if (!fnBody.ok) console.warn('send-registration:', fnBody.message)
       }
 
       setDone(true)
