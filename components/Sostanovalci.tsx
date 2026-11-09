@@ -1,3 +1,5 @@
+import Link from "next/link"
+
 const BP = process.env.NEXT_PUBLIC_BASE_PATH ?? ""
 
 const PARTNERJI = [
@@ -106,12 +108,17 @@ export default function Sostanovalci() {
 
             if (p.url) {
               const isExternal = p.url.startsWith("http")
+              if (isExternal) {
+                return (
+                  <a key={p.ime} href={p.url} target="_blank" rel="noopener noreferrer" className="block">
+                    {inner}
+                  </a>
+                )
+              }
               return (
-                <a key={p.ime} href={p.url}
-                   {...(isExternal ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-                   className="block">
+                <Link key={p.ime} href={p.url} className="block">
                   {inner}
-                </a>
+                </Link>
               )
             }
             return <div key={p.ime}>{inner}</div>
