@@ -82,3 +82,25 @@ Rešitev: vedno dodaj `--yes`.
 
 **Supabase access token mora biti nastavljen pred klicem.**
 `$env:SUPABASE_ACCESS_TOKEN = "sbp_..."` mora biti v isti PowerShell seji (ali `--token` zastavica).
+Token dobiš na https://supabase.com/dashboard/account/tokens → Generate new token.
+
+**npm-nameščen `supabase` NE deluje na Windows x64** (seja 2026-11-10).
+Simptom: `Error: No matching Supabase CLI binary package found for win32-x64`
+(tako iz `supabase.ps1` kot prek `npx supabase`). Vzrok: npm paket nima win32-x64 binarnosti.
+Rešitev: prenesi NATIVE Windows binary iz GitHub releases in ga poganjaj direktno:
+```powershell
+Invoke-WebRequest -Uri "https://github.com/supabase/cli/releases/latest/download/supabase_windows_amd64.tar.gz" -OutFile "$env:TEMP\supabase.tar.gz"
+cd $env:TEMP; tar -xzf supabase.tar.gz    # da supabase.exe
+$supa = "$env:TEMP\supabase.exe"; & $supa --version    # 3.0.0
+```
+PowerShell parser: `& $supa functions deploy ...` (klicni operator), NE `$env:TEMP\supabase.exe ...`
+(vrže "Unexpected token '\supabase.exe'").
+
+**Edge funkcija z PDF prilogo po emailu (src-rata-ta send-registration):**
+Supabase Edge Function (Deno) lahko: naloži PDF predlogo (fetch z javnega URL),
+izpolni polja z `npm:pdf-lib@1.17.1` (`form.getTextField(name).setText()`,
+`form.getCheckBox(name).check()`), pošlje prek Resend (`api.resend.com/emails`,
+attachments base64) iz verificirane domene. RESEND_API_KEY nastavi kot Supabase
+secret: `supabase secrets set RESEND_API_KEY=re_... --remote=<ref> --yes`.
+Resend domeno verificiraš z Auto configure (Cloudflare) v sekundah; EmailJS je
+alternativa brez backenda, a NE podpira dinamičnih binarnih prilog.
