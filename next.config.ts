@@ -5,6 +5,7 @@ const basePath = process.env.GITHUB_ACTIONS ? "/src-rata-ta" : "";
 
 const nextConfig: NextConfig = {
   output: "export",
+  trailingSlash: true,
   basePath,
   assetPrefix: basePath,
   env: {
