@@ -1,12 +1,21 @@
 const TEDEE_API = "https://api.tedee.com/api/v1.32";
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", {
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "POST",
-      },
+    return new Response("ok", { headers: CORS });
+  }
+
+  // Preveri secret header
+  const secret = req.headers.get("x-watchdog-secret");
+  if (secret !== "door-watchdog-2026-src") {
+    return new Response(JSON.stringify({ ok: false, error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...CORS, "Content-Type": "application/json" },
     });
   }
 
@@ -97,12 +106,13 @@ Deno.serve(async (req) => {
     }
 
     return new Response(JSON.stringify({ ok: true, isDayMode, isUnlocked }), {
-      headers: { "Content-Type": "application/json" },
+      status: 200,
+      headers: { ...CORS, "Content-Type": "application/json" },
     });
   } catch (e) {
     return new Response(JSON.stringify({ ok: false, error: String(e) }), {
       status: 500,
-      headers: { "Content-Type": "application/json" },
+      headers: { ...CORS, "Content-Type": "application/json" },
     });
   }
 });

@@ -13,7 +13,6 @@ jobs:
         run: |
           curl -X POST \
             -H "Content-Type: application/json" \
-            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
-            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "x-watchdog-secret: door-watchdog-2026-src" \
             -d '{}' \
             https://vlzyrcdrvvhxvdvuxgki.supabase.co/functions/v1/door-watchdog
