@@ -388,10 +388,10 @@ export default function AdminPage() {
                 <div>
                   <label className="text-xs text-white/40 mb-2 block">Vključene novice (samo objavljene) *</label>
                   <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
-                    {posts.filter(p => p.is_published).length === 0 && (
+                    {posts.length === 0 && (
                       <p className="text-white/30 text-sm py-4">Ni objavljenih novic. Najprej dodajte in objavite novico.</p>
                     )}
-                    {posts.filter(p => p.is_published).map(p => {
+                    {posts.map(p => {
                       const checked = nlSel.includes(p.id)
                       return (
                         <label key={p.id} className="flex items-start gap-3 p-3 rounded-lg cursor-pointer" style={{ background: checked ? 'rgba(79,107,189,0.12)' : '#0f131b', border: `1px solid ${checked ? 'rgba(79,107,189,0.4)' : 'rgba(255,255,255,0.06)'}` }}>
