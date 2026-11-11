@@ -123,11 +123,13 @@ Deno.serve(async (req) => {
       }
     }
   } catch (e) {
-    // Ignore verify error - trust Pull Spring was ok
+    // Ako verify pade - zasitniji pristup: vrati error
+    await logEvent(supabaseUrl, serviceKey, "unknown", "error", "Verify failed: " + String(e), openedBy, groupId, groupName);
+    return json({ success: false, lockState: "unknown", message: "Vrata se morda odpirajo, ampak ne morem preveri stanja." }, 200);
   }
 
-  await logEvent(supabaseUrl, serviceKey, lockState, "success", null, openedBy, groupId, groupName);
-  return json({ success: true, lockState: "unlocked", message: "Vrata se odpirajo!" }, 200);
+  await logEvent(supabaseUrl, serviceKey, "unlocked", "success", null, openedBy, groupId, groupName);
+  return json({ success: true, lockState: "unlocked", message: "✅ Vrata se odpirajo!" }, 200);
 });
 
 async function logEvent(
