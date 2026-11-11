@@ -115,12 +115,12 @@ export default function Navbar() {
 
         {/* Right side: social + login */}
         <div className="hidden md:flex items-center gap-3">
-          <Link href="https://www.facebook.com/src.ratata" target="_blank" className="text-white/60 hover:text-white transition-colors">
+          <Link href="https://www.facebook.com/src.ratata" target="_blank" rel="noopener noreferrer" className="text-white/60 hover:text-white transition-colors">
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
               <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
             </svg>
           </Link>
-          <Link href="http://www.instagram.com/src.ratata/" target="_blank" className="text-white/60 hover:text-white transition-colors">
+          <Link href="https://www.instagram.com/src.ratata/" target="_blank" rel="noopener noreferrer" className="text-white/60 hover:text-white transition-colors">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <rect x="2" y="2" width="20" height="20" rx="5" ry="5" strokeWidth={2} />
               <circle cx="12" cy="12" r="4" strokeWidth={2} />
