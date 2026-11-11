@@ -50,6 +50,7 @@ export default function DostopPage() {
     setDoorStatus("loading");
     setDoorMessage("");
 
+    let data: any = null;
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/tedee-pull-spring`,
@@ -63,27 +64,32 @@ export default function DostopPage() {
           body: JSON.stringify({ key, name: name || null }),
         }
       );
-      const data = await res.json();
+      data = await res.json();
 
       if (data.success) {
         setDoorStatus("success");
-        setDoorMessage("Vrata se odpirajo!");
-      } else if (data.lockState === "locked") {
+        setDoorMessage("Vrata se odpirajo! 🔓");
+      } else if (!data.success && (data.lockState === "locked" || data.lockState === "unknown")) {
         setDoorStatus("locked");
-        setDoorMessage("Vrata so zaklenjena. Počakajte.");
-      } else if (res.status === 403) {
+        setDoorMessage("⚠️ Vrata so zaklenjena. Prosimo, počakajte ali kontaktirajte upravljavca.");
+      } else if (res.status === 403 || data.message?.includes("Neveljavna")) {
         setDoorStatus("no_key");
-        setDoorMessage("Neveljavna QR koda.");
+        setDoorMessage("❌ Neveljavna QR koda.");
+      } else if (!data.success) {
+        setDoorStatus("error");
+        setDoorMessage("❌ " + (data.message ?? "Napaka pri odpiranju vrat."));
       } else {
         setDoorStatus("error");
-        setDoorMessage(data.message ?? "Napaka pri odpiranju.");
+        setDoorMessage("❌ Neznana napaka.");
       }
     } catch {
       setDoorStatus("error");
       setDoorMessage("Napaka pri povezavi. Preverite internet.");
     }
 
-    setTimeout(() => setDoorStatus("idle"), 5000);
+    // Drugačen timeout glede na status
+    const timeout = (data?.success || data?.lockState === "locked") ? 3000 : 4000;
+    setTimeout(() => setDoorStatus("idle"), timeout);
   }
 
   // Nalaganje
