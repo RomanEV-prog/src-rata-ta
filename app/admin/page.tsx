@@ -39,6 +39,7 @@ export default function AdminPage() {
   const [nlSending, setNlSending] = useState(false)
   const [nlKeyInput, setNlKeyInput] = useState('')
   const [nlSavingSettings, setNlSavingSettings] = useState(false)
+  const [nlImporting, setNlImporting] = useState(false)
 
   // Obnovi JWT iz sessionStorage
   useEffect(() => {
@@ -98,6 +99,21 @@ export default function AdminPage() {
       setNlSel([]); setNlSubject(''); setNlIntro('')
     } catch { setMsg('Napaka pri pošiljanju') }
     finally { setNlSending(false) }
+  }
+
+  async function importMembers() {
+    if (!token) return
+    if (!confirm('Uvoziti aktivne člane iz RangeOS? Vsak dobi EN potrditveni mejl; naročen postane šele, ko potrdi.')) return
+    setNlImporting(true); setMsg('')
+    try {
+      const r = await fetch(`${API}/newsletter/import-members`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } })
+      const b = await r.json()
+      if (!b.ok) { setMsg('Napaka: ' + (b.message ?? 'uvoz ni uspel')); return }
+      const d = b.data
+      setMsg(`✓ Poslanih povabil: ${d.invited}. Preskočenih (že vpisani): ${d.skippedExisting}. Brez e-pošte: ${d.noEmail}. Pregledanih članov: ${d.totalMembers}.`)
+      await fetchNewsletter(token)
+    } catch { setMsg('Napaka pri uvozu') }
+    finally { setNlImporting(false) }
   }
 
   async function saveNlSettings() {
@@ -370,6 +386,18 @@ export default function AdminPage() {
                 ⚠ Resend API ključ ni nastavljen — pošiljanje ne bo delovalo. Nastavite ga spodaj.
               </div>
             )}
+
+            {/* Uvoz članov iz RangeOS */}
+            <div className="p-5 rounded-2xl flex flex-col sm:flex-row sm:items-center gap-4" style={{ background: '#131720', border: '1px solid rgba(255,255,255,0.07)' }}>
+              <div className="sm:flex-1">
+                <div className="text-white font-semibold text-sm">Uvozi člane iz RangeOS</div>
+                <div className="text-white/40 text-xs mt-0.5 leading-relaxed">Vsak aktiven član/osebje dobi eno povabilo za potrditev (opt-in). Naročen postane šele po kliku v mejlu. Že vpisane in odjavljene preskoči.</div>
+              </div>
+              <button onClick={importMembers} disabled={nlImporting || !nlSettings.hasKey}
+                className="px-5 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-40 hover:brightness-110 whitespace-nowrap" style={{ background: '#4f6bbd' }}>
+                {nlImporting ? 'Uvažam…' : 'Uvozi člane'}
+              </button>
+            </div>
 
             {/* Sestavi in pošlji */}
             <div className="p-6 rounded-2xl" style={{ background: '#131720', border: '1px solid rgba(79,107,189,0.3)' }}>
