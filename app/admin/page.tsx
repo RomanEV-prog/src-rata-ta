@@ -28,8 +28,17 @@ export default function AdminPage() {
   const [msg, setMsg] = useState('')
   const [liveTargets, setLiveTargets] = useState(true)
   const [togglingLive, setTogglingLive] = useState(false)
-  const [tab, setTab] = useState<'novice' | 'liga'>('novice')
+  const [tab, setTab] = useState<'novice' | 'liga' | 'novicnik'>('novice')
   const [ligaRegs, setLigaRegs] = useState<LigaReg[]>([])
+  // Novičnik
+  const [nlStats, setNlStats] = useState<{ confirmed: number; pending: number; unsubscribed: number; recent: { email: string; status: string; created_at: number }[] } | null>(null)
+  const [nlSettings, setNlSettings] = useState<{ from: string; replyTo: string; hasKey: boolean }>({ from: '', replyTo: '', hasKey: false })
+  const [nlSel, setNlSel] = useState<number[]>([])
+  const [nlSubject, setNlSubject] = useState('')
+  const [nlIntro, setNlIntro] = useState('')
+  const [nlSending, setNlSending] = useState(false)
+  const [nlKeyInput, setNlKeyInput] = useState('')
+  const [nlSavingSettings, setNlSavingSettings] = useState(false)
 
   // Obnovi JWT iz sessionStorage
   useEffect(() => {
@@ -58,7 +67,57 @@ export default function AdminPage() {
     } catch {}
   }, [])
 
-  useEffect(() => { if (token) { fetchNews(token); fetchConfig(); fetchLiga(token) } }, [token, fetchNews, fetchConfig, fetchLiga])
+  const fetchNewsletter = useCallback(async (tok: string) => {
+    try {
+      const [s, cfg] = await Promise.all([
+        fetch(`${API}/newsletter/subscribers`, { headers: { Authorization: `Bearer ${tok}` } }).then(r => r.json()),
+        fetch(`${API}/newsletter/settings`, { headers: { Authorization: `Bearer ${tok}` } }).then(r => r.json()),
+      ])
+      if (s.ok) setNlStats(s.data)
+      if (cfg.ok) setNlSettings(cfg.data)
+    } catch {}
+  }, [])
+
+  useEffect(() => { if (token) { fetchNews(token); fetchConfig(); fetchLiga(token); fetchNewsletter(token) } }, [token, fetchNews, fetchConfig, fetchLiga, fetchNewsletter])
+
+  async function sendNewsletter() {
+    if (!token) return
+    if (!nlSubject.trim()) { setMsg('Vnesite zadevo sporočila.'); return }
+    if (nlSel.length === 0) { setMsg('Izberite vsaj eno novico.'); return }
+    const recipients = nlStats?.confirmed ?? 0
+    if (!confirm(`Poslati novičnik ${recipients} potrjenim naročnikom?`)) return
+    setNlSending(true); setMsg('')
+    try {
+      const r = await fetch(`${API}/newsletter/send`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ subject: nlSubject.trim(), intro: nlIntro.trim() || undefined, news_ids: nlSel }),
+      })
+      const b = await r.json()
+      if (!b.ok) { setMsg('Napaka: ' + (b.message ?? 'pošiljanje ni uspelo')); return }
+      setMsg(`✓ Poslano ${b.data.recipientCount} naročnikom.`)
+      setNlSel([]); setNlSubject(''); setNlIntro('')
+    } catch { setMsg('Napaka pri pošiljanju') }
+    finally { setNlSending(false) }
+  }
+
+  async function saveNlSettings() {
+    if (!token) return
+    setNlSavingSettings(true); setMsg('')
+    try {
+      const body: Record<string, string> = { from: nlSettings.from, replyTo: nlSettings.replyTo }
+      if (nlKeyInput.trim()) body.resendKey = nlKeyInput.trim()
+      const r = await fetch(`${API}/newsletter/settings`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(body),
+      })
+      const b = await r.json()
+      if (!b.ok) { setMsg('Napaka pri shranjevanju nastavitev'); return }
+      setMsg('Nastavitve novičnika shranjene.')
+      setNlKeyInput('')
+      await fetchNewsletter(token)
+    } catch { setMsg('Napaka pri shranjevanju') }
+    finally { setNlSavingSettings(false) }
+  }
 
   async function setLigaStatus(tok: string, id: number, status: string) {
     await fetch(`${API}/league-registrations/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tok}` }, body: JSON.stringify({ status }) })
@@ -153,11 +212,15 @@ export default function AdminPage() {
 
         {/* Zavihki */}
         <div className="flex gap-2 mb-6">
-          {(['novice', 'liga'] as const).map(t => (
+          {(['novice', 'liga', 'novicnik'] as const).map(t => (
             <button key={t} onClick={() => setTab(t)}
               className="px-5 py-2 rounded-xl text-sm font-semibold transition-colors"
               style={{ background: tab === t ? '#4f6bbd' : '#1a1f2e', color: tab === t ? '#fff' : 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.08)' }}>
-              {t === 'novice' ? 'Novice' : `Prijave na ligo${ligaRegs.filter(r => r.status === 'new').length > 0 ? ` (${ligaRegs.filter(r => r.status === 'new').length})` : ''}`}
+              {t === 'novice'
+                ? 'Novice'
+                : t === 'liga'
+                ? `Prijave na ligo${ligaRegs.filter(r => r.status === 'new').length > 0 ? ` (${ligaRegs.filter(r => r.status === 'new').length})` : ''}`
+                : `Novičnik${nlStats ? ` (${nlStats.confirmed})` : ''}`}
             </button>
           ))}
           {tab === 'novice' && (
@@ -282,6 +345,122 @@ export default function AdminPage() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Zavihek: Novičnik */}
+        {tab === 'novicnik' && (
+          <div className="space-y-6">
+            {/* Statistika */}
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { label: 'Potrjeni', val: nlStats?.confirmed ?? 0, color: '#3dba8a' },
+                { label: 'Čakajo potrditev', val: nlStats?.pending ?? 0, color: '#e67e22' },
+                { label: 'Odjavljeni', val: nlStats?.unsubscribed ?? 0, color: '#7a8cc9' },
+              ].map(s => (
+                <div key={s.label} className="p-4 rounded-xl text-center" style={{ background: '#131720', border: '1px solid rgba(255,255,255,0.07)' }}>
+                  <div className="text-2xl font-black" style={{ color: s.color }}>{s.val}</div>
+                  <div className="text-xs text-white/40 mt-1">{s.label}</div>
+                </div>
+              ))}
+            </div>
+
+            {!nlSettings.hasKey && (
+              <div className="px-4 py-3 rounded-xl text-sm" style={{ background: '#2a1a1a', color: '#e07a7a', border: '1px solid rgba(224,122,122,0.2)' }}>
+                ⚠ Resend API ključ ni nastavljen — pošiljanje ne bo delovalo. Nastavite ga spodaj.
+              </div>
+            )}
+
+            {/* Sestavi in pošlji */}
+            <div className="p-6 rounded-2xl" style={{ background: '#131720', border: '1px solid rgba(79,107,189,0.3)' }}>
+              <h2 className="text-white font-bold mb-5">Sestavi in pošlji novičnik</h2>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs text-white/40 mb-1 block">Zadeva sporočila *</label>
+                  <input value={nlSubject} onChange={e => setNlSubject(e.target.value)} placeholder="Npr. Novosti strelišča — november"
+                    className={inp} style={inpStyle} />
+                </div>
+                <div>
+                  <label className="text-xs text-white/40 mb-1 block">Uvodni odstavek (opcijsko)</label>
+                  <textarea rows={2} value={nlIntro} onChange={e => setNlIntro(e.target.value)} placeholder="Kratek pozdrav pred novicami…"
+                    className={inp + ' resize-none'} style={inpStyle} />
+                </div>
+                <div>
+                  <label className="text-xs text-white/40 mb-2 block">Vključene novice (samo objavljene) *</label>
+                  <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                    {posts.filter(p => p.is_published).length === 0 && (
+                      <p className="text-white/30 text-sm py-4">Ni objavljenih novic. Najprej dodajte in objavite novico.</p>
+                    )}
+                    {posts.filter(p => p.is_published).map(p => {
+                      const checked = nlSel.includes(p.id)
+                      return (
+                        <label key={p.id} className="flex items-start gap-3 p-3 rounded-lg cursor-pointer" style={{ background: checked ? 'rgba(79,107,189,0.12)' : '#0f131b', border: `1px solid ${checked ? 'rgba(79,107,189,0.4)' : 'rgba(255,255,255,0.06)'}` }}>
+                          <input type="checkbox" checked={checked} className="mt-1 w-4 h-4 flex-shrink-0"
+                            onChange={e => setNlSel(prev => e.target.checked ? [...prev, p.id] : prev.filter(x => x !== p.id))} />
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: (catColor[p.category] ?? '#7a8cc9') + '25', color: catColor[p.category] ?? '#7a8cc9' }}>{p.category}</span>
+                              <span className="text-xs text-white/30">{fmtDate(p.published_at)}</span>
+                            </div>
+                            <div className="text-white text-sm font-semibold mt-1">{p.title}</div>
+                            {p.excerpt && <div className="text-white/40 text-xs mt-0.5 truncate">{p.excerpt}</div>}
+                          </div>
+                        </label>
+                      )
+                    })}
+                  </div>
+                </div>
+                <button onClick={sendNewsletter} disabled={nlSending || !nlSettings.hasKey || nlSel.length === 0 || !nlSubject.trim()}
+                  className="px-6 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-40 hover:brightness-110" style={{ background: '#c0392b' }}>
+                  {nlSending ? 'Pošiljam…' : `Pošlji članom${nlStats ? ` (${nlStats.confirmed})` : ''}`}
+                </button>
+              </div>
+            </div>
+
+            {/* Nastavitve pošiljanja */}
+            <div className="p-6 rounded-2xl" style={{ background: '#131720', border: '1px solid rgba(255,255,255,0.07)' }}>
+              <h2 className="text-white font-bold mb-5">Nastavitve pošiljanja</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="sm:col-span-2">
+                  <label className="text-xs text-white/40 mb-1 block">Pošiljatelj (from)</label>
+                  <input value={nlSettings.from} onChange={e => setNlSettings(s => ({ ...s, from: e.target.value }))}
+                    placeholder="ŠRC Ra-Ta-Ta <novice@adlerhub.eu>" className={inp} style={inpStyle} />
+                </div>
+                <div>
+                  <label className="text-xs text-white/40 mb-1 block">Odgovor na (reply-to)</label>
+                  <input value={nlSettings.replyTo} onChange={e => setNlSettings(s => ({ ...s, replyTo: e.target.value }))}
+                    placeholder="src.ratata@gmail.com" className={inp} style={inpStyle} />
+                </div>
+                <div>
+                  <label className="text-xs text-white/40 mb-1 block">Resend API ključ {nlSettings.hasKey && <span style={{ color: '#3dba8a' }}>(nastavljen)</span>}</label>
+                  <input type="password" value={nlKeyInput} onChange={e => setNlKeyInput(e.target.value)}
+                    placeholder={nlSettings.hasKey ? '•••••••• (pustite prazno = brez spremembe)' : 're_...'} className={inp} style={inpStyle} />
+                </div>
+              </div>
+              <button onClick={saveNlSettings} disabled={nlSavingSettings}
+                className="mt-4 px-6 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-40 hover:brightness-110" style={{ background: '#4f6bbd' }}>
+                {nlSavingSettings ? 'Shranjujem…' : 'Shrani nastavitve'}
+              </button>
+            </div>
+
+            {/* Zadnji naročniki */}
+            <div>
+              <h3 className="text-xs font-semibold tracking-widest text-white/40 uppercase mb-3">Zadnji naročniki</h3>
+              <div className="space-y-2">
+                {(nlStats?.recent ?? []).length === 0 && <p className="text-white/30 text-sm py-4">Še ni naročnikov</p>}
+                {(nlStats?.recent ?? []).map((s, i) => (
+                  <div key={i} className="flex items-center justify-between px-4 py-2.5 rounded-lg text-sm" style={{ background: '#131720', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <span className="text-white/80 truncate">{s.email}</span>
+                    <span className="flex items-center gap-3 flex-shrink-0 ml-3">
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: (statusColor[s.status === 'confirmed' ? 'confirmed' : s.status === 'pending' ? 'contacted' : 'new']) + '25', color: s.status === 'confirmed' ? '#3dba8a' : s.status === 'pending' ? '#e67e22' : '#7a8cc9' }}>
+                        {s.status === 'confirmed' ? 'potrjen' : s.status === 'pending' ? 'čaka' : 'odjavljen'}
+                      </span>
+                      <span className="text-xs text-white/30">{fmtDate(s.created_at)}</span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 

@@ -1,6 +1,7 @@
 'use client'
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import NewsletterSignup from "@/components/NewsletterSignup";
 
 const BP = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 const API = "https://rangeos-api.adlerhub.eu";
@@ -82,6 +83,20 @@ export default function Footer() {
   return (
     <footer style={{ background: "#0a0c10", borderTop: "1px solid rgba(255,255,255,0.07)" }} className="py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
+
+        {/* Prijava na novice */}
+        <div className="mb-12 pb-12 border-b border-white/5 flex flex-col md:flex-row md:items-center gap-6">
+          <div className="md:flex-1">
+            <h3 className="text-xs font-semibold tracking-widest text-white/50 uppercase mb-2">Novice & obvestila</h3>
+            <p className="text-sm text-white/60 leading-relaxed max-w-md">
+              Prijavite se in prejmite obvestilo ob novih dogodkih, izobraževanjih in novostih strelišča.
+            </p>
+          </div>
+          <div className="md:flex-1 md:max-w-md w-full">
+            <NewsletterSignup />
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
 
           {/* Delovni čas */}
