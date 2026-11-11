@@ -12,12 +12,31 @@ const DISCIPLINE_CHECKBOX: Record<string, string> = {
   'Pištola/revolver standardna cal. .22 L.R., 25m enoročno':  'checkbox_196v0s',
 }
 
+// Pobegni HTML (prepreči injection uporabniškega vnosa v e-poštni HTML)
+function esc(v: unknown): string {
+  return String(v ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;')
+    .slice(0, 500)
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS })
 
   try {
     const body = await req.json()
     const { first_name, last_name, email, phone, date_of_birth, society, discipline, note } = body
+
+    // Osnovna validacija vnosa (prepreči zlorabo/spam)
+    if (!first_name || !last_name || !email) {
+      return new Response(JSON.stringify({ ok: false, message: 'Manjkajo obvezna polja.' }),
+        { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } })
+    }
+    const emailStr = String(email)
+    if (emailStr.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailStr)) {
+      return new Response(JSON.stringify({ ok: false, message: 'Neveljaven e-naslov.' }),
+        { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } })
+    }
 
     // 1. Naloži prijavnica PDF predlogo
     const pdfRes = await fetch('https://romanev-prog.github.io/src-rata-ta/prijavnica-liga-fenix.pdf')
@@ -109,8 +128,9 @@ Deno.serve(async (req) => {
 })
 
 function tableRow(label: string, val: string) {
+  // label je statičen (zaupan), val je uporabniški vnos → pobegni.
   return `<tr>
     <td style="padding:8px 12px;background:#f5f5f5;font-weight:600;color:#333;width:160px;border-bottom:1px solid #ddd">${label}</td>
-    <td style="padding:8px 12px;color:#222;border-bottom:1px solid #ddd">${val}</td>
+    <td style="padding:8px 12px;color:#222;border-bottom:1px solid #ddd">${esc(val)}</td>
   </tr>`
 }
