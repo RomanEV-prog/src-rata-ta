@@ -32,6 +32,8 @@ export default function Hero() {
         className="absolute inset-0 w-full h-full object-cover"
         style={{ filter: "brightness(0.25)" }}
         autoPlay muted loop playsInline
+        poster={`${BP}/hero-poster.jpg`}
+        preload="metadata"
       >
         <source src={`${BP}/hero-bg.mp4`} type="video/mp4" />
       </video>
