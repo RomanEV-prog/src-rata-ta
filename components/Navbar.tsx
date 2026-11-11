@@ -40,69 +40,72 @@ export default function Navbar() {
           <Link href="/" className="hover:text-white transition-colors">Domov</Link>
 
           {/* Ponudba dropdown */}
-          <div className="relative">
-            <button
-              onMouseEnter={() => setPonudbaOpen(true)}
-              onMouseLeave={() => setPonudbaOpen(false)}
-              className="flex items-center gap-1 hover:text-white transition-colors"
-            >
+          <div
+            className="relative"
+            onMouseEnter={() => setPonudbaOpen(true)}
+            onMouseLeave={() => setPonudbaOpen(false)}
+          >
+            <button className="flex items-center gap-1 hover:text-white transition-colors">
               Ponudba
               <svg className="w-3 h-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
             </button>
             {ponudbaOpen && (
-              <div
-                onMouseEnter={() => setPonudbaOpen(true)}
-                onMouseLeave={() => setPonudbaOpen(false)}
-                className="absolute top-full left-0 mt-1 w-52 rounded-lg overflow-hidden shadow-xl"
-                style={{ background: "#1a1f2e" }}
-              >
-                {ponudbaLinks.map((l) => (
-                  <Link
-                    key={l.href}
-                    href={l.href}
-                    className="block px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition-colors"
-                  >
-                    {l.label}
-                  </Link>
-                ))}
+              // top-full + pt-1: meni se dotika gumba (prozoren most čez 4 px), da se ob
+              // premiku miške navzdol ne zapre; hover logika je na ovojnem divu zgoraj.
+              <div className="absolute top-full left-0 pt-1 w-52">
+                <div
+                  className="rounded-lg overflow-hidden shadow-xl"
+                  style={{ background: "#1a1f2e" }}
+                >
+                  {ponudbaLinks.map((l) => (
+                    <Link
+                      key={l.href}
+                      href={l.href}
+                      className="block px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition-colors"
+                    >
+                      {l.label}
+                    </Link>
+                  ))}
+                </div>
               </div>
             )}
           </div>
 
           <Link href="/o-nas" className="hover:text-white transition-colors">O nas</Link>
           <Link href="/news-events" className="hover:text-white transition-colors">Novice, dogodki</Link>
-          <Link href="https://trgovina.strelisce-maribor.si" className="hover:text-white transition-colors">Trgovina</Link>
+          <Link href="/trgovina" className="hover:text-white transition-colors">Trgovina</Link>
 
           {/* Članstvo dropdown */}
-          <div className="relative">
-            <button
-              onMouseEnter={() => setClanstvoOpen(true)}
-              onMouseLeave={() => setClanstvoOpen(false)}
-              className="flex items-center gap-1 hover:text-white transition-colors"
-            >
+          <div
+            className="relative"
+            onMouseEnter={() => setClanstvoOpen(true)}
+            onMouseLeave={() => setClanstvoOpen(false)}
+          >
+            <button className="flex items-center gap-1 hover:text-white transition-colors">
               Članstvo
               <svg className="w-3 h-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
             </button>
             {clanstvoOpen && (
-              <div
-                onMouseEnter={() => setClanstvoOpen(true)}
-                onMouseLeave={() => setClanstvoOpen(false)}
-                className="absolute top-full left-0 mt-1 w-44 rounded-lg overflow-hidden shadow-xl"
-                style={{ background: "#1a1f2e" }}
-              >
-                {clanstvoLinks.map((l) => (
-                  <Link
-                    key={l.href}
-                    href={l.href}
-                    className="block px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition-colors"
-                  >
-                    {l.label}
-                  </Link>
-                ))}
+              // top-full + pt-1: prozoren most čez 4 px, da meni ostane odprt ob premiku navzdol.
+              <div className="absolute top-full left-0 pt-1 w-44">
+                <div
+                  className="rounded-lg overflow-hidden shadow-xl"
+                  style={{ background: "#1a1f2e" }}
+                >
+                  {clanstvoLinks.map((l) => (
+                    <Link
+                      key={l.href}
+                      href={l.href}
+                      className="block px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 hover:text-white transition-colors"
+                    >
+                      {l.label}
+                    </Link>
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -157,7 +160,7 @@ export default function Navbar() {
           </div>
           <Link href="/o-nas" onClick={() => setMobileOpen(false)}>O nas</Link>
           <Link href="/news-events" onClick={() => setMobileOpen(false)}>Novice, dogodki</Link>
-          <Link href="https://trgovina.strelisce-maribor.si" onClick={() => setMobileOpen(false)}>Trgovina</Link>
+          <Link href="/trgovina" onClick={() => setMobileOpen(false)}>Trgovina</Link>
           <Link href="/clanstvo" onClick={() => setMobileOpen(false)}>Članstvo</Link>
           <Link href="/clanstvo/sd-fenix" onClick={() => setMobileOpen(false)} className="text-white/60 pl-3">— Prijava na ligo</Link>
           <Link href="/kontakt" onClick={() => setMobileOpen(false)}>Kontakt</Link>
