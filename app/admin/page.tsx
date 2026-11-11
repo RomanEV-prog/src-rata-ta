@@ -110,7 +110,9 @@ export default function AdminPage() {
       const b = await r.json()
       if (!b.ok) { setMsg('Napaka: ' + (b.message ?? 'uvoz ni uspel')); return }
       const d = b.data
-      setMsg(`✓ Poslanih povabil: ${d.invited}. Preskočenih (že vpisani): ${d.skippedExisting}. Brez e-pošte: ${d.noEmail}. Pregledanih članov: ${d.totalMembers}.`)
+      let m = `✓ Poslanih povabil: ${d.invited}. Preostane za uvoz: ${d.remaining}. Preskočenih (že vpisani): ${d.skippedExisting}. Brez e-pošte: ${d.noEmail}.`
+      if (d.remaining > 0) m += d.stopped ? ` Ustavljeno: ${d.stopped}` : ' Ponovi jutri za preostale (dnevna omejitev pošiljanja).'
+      setMsg(m)
       await fetchNewsletter(token)
     } catch { setMsg('Napaka pri uvozu') }
     finally { setNlImporting(false) }
@@ -391,7 +393,7 @@ export default function AdminPage() {
             <div className="p-5 rounded-2xl flex flex-col sm:flex-row sm:items-center gap-4" style={{ background: '#131720', border: '1px solid rgba(255,255,255,0.07)' }}>
               <div className="sm:flex-1">
                 <div className="text-white font-semibold text-sm">Uvozi člane iz RangeOS</div>
-                <div className="text-white/40 text-xs mt-0.5 leading-relaxed">Vsak aktiven član/osebje dobi eno povabilo za potrditev (opt-in). Naročen postane šele po kliku v mejlu. Že vpisane in odjavljene preskoči.</div>
+                <div className="text-white/40 text-xs mt-0.5 leading-relaxed">Vsak aktiven član/osebje dobi eno povabilo za potrditev (opt-in). Naročen postane šele po kliku v mejlu. Že vpisane in odjavljene preskoči. Največ ~90 na zagon (dnevna omejitev) — če ostane, ponovi naslednji dan.</div>
               </div>
               <button onClick={importMembers} disabled={nlImporting || !nlSettings.hasKey}
                 className="px-5 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-40 hover:brightness-110 whitespace-nowrap" style={{ background: '#4f6bbd' }}>
