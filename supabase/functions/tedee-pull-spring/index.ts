@@ -99,8 +99,35 @@ Deno.serve(async (req) => {
     return json({ success: false, message: "Napaka pri izvajanju Pull Spring." }, 502);
   }
 
+  // Počakaj 1 sekundo, potem ponovno preveri stanje
+  await new Promise(resolve => setTimeout(resolve, 1000));
+
+  try {
+    const verifyRes = await fetch(`${TEDEE_API}/my/lock/${lockId}`, {
+      headers: { Authorization: `PersonalKey ${tedeeToken}` },
+    });
+
+    if (verifyRes.ok) {
+      const verifyData = await verifyRes.json();
+      const verifyState = verifyData?.result?.lockProperties?.state;
+      const verifyUnlocked = verifyState === 2 || verifyState === 6;
+
+      if (!verifyUnlocked) {
+        // Pull Spring je bil sprožen, ampak vrata ostanejo zaklenjena
+        await logEvent(supabaseUrl, serviceKey, "locked", "error", "Pull Spring sprožen, ampak vrata ostanejo zaklenjena", openedBy, groupId, groupName);
+        return json({
+          success: false,
+          lockState: "locked",
+          message: "Vrata ostanejo zaklenjena. Ključavnica je morda v napaki."
+        }, 200);
+      }
+    }
+  } catch (e) {
+    // Ignore verify error - trust Pull Spring was ok
+  }
+
   await logEvent(supabaseUrl, serviceKey, lockState, "success", null, openedBy, groupId, groupName);
-  return json({ success: true, lockState, message: "Vrata se odpirajo!" }, 200);
+  return json({ success: true, lockState: "unlocked", message: "Vrata se odpirajo!" }, 200);
 });
 
 async function logEvent(
