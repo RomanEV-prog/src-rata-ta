@@ -25,7 +25,11 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json()
-    const { first_name, last_name, email, phone, date_of_birth, society, discipline, note } = body
+    const {
+      first_name, last_name, email, phone, date_of_birth, society, discipline, note,
+      address, city, weapon_permit, permit_issuer,
+      weapon_type, weapon_serial, weapon_owner, ammo_qty, ammo_owner,
+    } = body
 
     // Osnovna validacija vnosa (prepreči zlorabo/spam)
     if (!first_name || !last_name || !email) {
@@ -52,9 +56,20 @@ Deno.serve(async (req) => {
     }
 
     const today = new Date().toLocaleDateString('sl-SI')
-    setText('text_10o9i',  `${first_name} ${last_name}`)
-    setText('text_147w5p', today)
-    setText('text_151t6a', society ?? '')
+    setText('text_10o9i',  `${first_name} ${last_name}`)   // Ime in priimek
+    setText('text_147w5p', today)                          // Datum
+    setText('text_151t6a', society ?? '')                  // Društvo
+    setText('text_28a5b',  address ?? '')                  // Naslov (ulica in hišna št.)
+    setText('text_39i3r',  city ?? '')                     // Kraj (pošta, država)
+    setText('text_40p2h',  weapon_permit ?? '')            // Vrsta in št. orožne listine
+    setText('text_56w5y',  permit_issuer ?? '')            // Ime izdajatelja listine
+
+    // Orožje + strelivo — v pravi stolpec glede na tip (pištola/revolver)
+    const jePistola = (weapon_type ?? 'pištola') !== 'revolver'
+    setText(jePistola ? 'text_69u0x' : 'text_73e9g', weapon_serial ?? '')  // Tovarniška št.
+    setText(jePistola ? 'text_81n1p' : 'text_96q6k', weapon_owner ?? '')   // Lastništvo orožja
+    setText(jePistola ? 'text_105o7i' : 'text_110a7y', ammo_qty ?? '')     // Količina streliva
+    setText(jePistola ? 'text_128s7t' : 'text_134o4c', ammo_owner ?? '')   // Lastništvo streliva
 
     // Označi panogo
     const cbName = DISCIPLINE_CHECKBOX[discipline ?? '']

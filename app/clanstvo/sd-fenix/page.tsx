@@ -53,6 +53,8 @@ export default function SdFenixPage() {
   const [form, setForm] = useState({
     first_name: '', last_name: '', email: '', phone: '',
     date_of_birth: '', society: '', discipline: '', note: '',
+    address: '', city: '', weapon_permit: '', permit_issuer: '',
+    weapon_type: 'pištola', weapon_serial: '', weapon_owner: '', ammo_qty: '', ammo_owner: '',
   })
   const [sending, setSending] = useState(false)
   const [done, setDone] = useState(false)
@@ -196,6 +198,50 @@ export default function SdFenixPage() {
                   {DISCIPLINE.map(d => <option key={d} value={d}>{d}</option>)}
                 </select>
               </div>
+              <div>
+                <label className="text-xs text-white/40 mb-1 block">Naslov (ulica in hišna št.)</label>
+                <input value={form.address} onChange={e => set('address', e.target.value)} className={inp} style={inpStyle} />
+              </div>
+              <div>
+                <label className="text-xs text-white/40 mb-1 block">Kraj (poštna št., pošta, država)</label>
+                <input value={form.city} onChange={e => set('city', e.target.value)} placeholder="npr. 2000 Maribor" className={inp} style={inpStyle} />
+              </div>
+
+              <div className="sm:col-span-2 mt-2 text-xs font-semibold tracking-widest uppercase" style={{ color: '#7a8cc9' }}>Orožna listina</div>
+              <div>
+                <label className="text-xs text-white/40 mb-1 block">Vrsta in št. orožne listine</label>
+                <input value={form.weapon_permit} onChange={e => set('weapon_permit', e.target.value)} className={inp} style={inpStyle} />
+              </div>
+              <div>
+                <label className="text-xs text-white/40 mb-1 block">Ime izdajatelja</label>
+                <input value={form.permit_issuer} onChange={e => set('permit_issuer', e.target.value)} placeholder="npr. UE Maribor" className={inp} style={inpStyle} />
+              </div>
+
+              <div className="sm:col-span-2 mt-2 text-xs font-semibold tracking-widest uppercase" style={{ color: '#7a8cc9' }}>Orožje in strelivo</div>
+              <div>
+                <label className="text-xs text-white/40 mb-1 block">Tip orožja</label>
+                <select value={form.weapon_type} onChange={e => set('weapon_type', e.target.value)} className={inp} style={inpStyle}>
+                  <option value="pištola">Pištola</option>
+                  <option value="revolver">Revolver</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-white/40 mb-1 block">Tovarniška številka</label>
+                <input value={form.weapon_serial} onChange={e => set('weapon_serial', e.target.value)} className={inp} style={inpStyle} />
+              </div>
+              <div>
+                <label className="text-xs text-white/40 mb-1 block">Lastništvo orožja</label>
+                <input value={form.weapon_owner} onChange={e => set('weapon_owner', e.target.value)} placeholder="ime in priimek lastnika" className={inp} style={inpStyle} />
+              </div>
+              <div>
+                <label className="text-xs text-white/40 mb-1 block">Količina streliva</label>
+                <input value={form.ammo_qty} onChange={e => set('ammo_qty', e.target.value)} placeholder="npr. 50" className={inp} style={inpStyle} />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="text-xs text-white/40 mb-1 block">Lastništvo streliva</label>
+                <input value={form.ammo_owner} onChange={e => set('ammo_owner', e.target.value)} placeholder="ime in priimek lastnika" className={inp} style={inpStyle} />
+              </div>
+
               <div className="sm:col-span-2">
                 <label className="text-xs text-white/40 mb-1 block">Opomba</label>
                 <textarea rows={3} value={form.note} onChange={e => set('note', e.target.value)}
