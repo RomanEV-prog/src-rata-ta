@@ -1,24 +1,13 @@
 'use client'
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
+import { fetchNews, type NewsPost } from '@/lib/news'
 
 const BP = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
-const API = 'https://rangeos-api.adlerhub.eu'
-
-interface NewsPost {
-  id: number
-  title: string
-  excerpt: string | null
-  category: string
-  image_url: string | null
-  slug: string | null
-  published_at: number
-}
 
 const FALLBACK: NewsPost[] = [
-  { id: 1, title: 'Preizkus znanja o varnem ravnanju z orožjem 07. 10. 2026', excerpt: 'Preizkus znanja o varnem ravnanju z orožjem 7. in 8.10.2026 ob 16,00', category: 'izobraževanja', image_url: `${BP}/news/izpit-vro.jpg`, slug: 'izpit-vro-2026', published_at: 1759824000000 },
-  { id: 2, title: 'Razpis usposabljanja o varnem ravnanju z orožjem', excerpt: 'V SD Fenix razpisujemo usposabljanje za varno rokovanje z orožjem.', category: 'izobraževanja', image_url: `${BP}/news/usposabljanje.png`, slug: 'razpis-usposabljanja-2026', published_at: 1759737600000 },
-  { id: 3, title: 'Kolektivni dopust 22.07 – 10.08.2026', excerpt: 'Strelišče bo zaprto od 22.07.2026 do 10.08.2026 zaradi kolektivnega dopusta.', category: 'obvestila', image_url: `${BP}/news/dopust.png`, slug: 'kolektivni-dopust-2026', published_at: 1753142400000 },
+  { id: 1, title: 'Preizkus znanja o varnem ravnanju z orožjem 07. 10. 2026', excerpt: 'Preizkus znanja o varnem ravnanju z orožjem 7. in 8.10.2026 ob 16,00', content: null, category: 'izobraževanja', image_url: `${BP}/news/izpit-vro.jpg`, slug: 'izpit-vro-2026', published_at: 1759824000000 },
+  { id: 2, title: 'Razpis usposabljanja o varnem ravnanju z orožjem', excerpt: 'V SD Fenix razpisujemo usposabljanje za varno rokovanje z orožjem.', content: null, category: 'izobraževanja', image_url: `${BP}/news/usposabljanje.png`, slug: 'razpis-usposabljanja-2026', published_at: 1759737600000 },
+  { id: 3, title: 'Kolektivni dopust 22.07 – 10.08.2026', excerpt: 'Strelišče bo zaprto od 22.07.2026 do 10.08.2026 zaradi kolektivnega dopusta.', content: null, category: 'obvestila', image_url: `${BP}/news/dopust.png`, slug: 'kolektivni-dopust-2026', published_at: 1753142400000 },
 ]
 
 const catColor: Record<string, string> = {
@@ -36,10 +25,7 @@ export default function News() {
   const [posts, setPosts] = useState<NewsPost[]>(FALLBACK)
 
   useEffect(() => {
-    fetch(`${API}/public/news`)
-      .then(r => r.json())
-      .then(b => { if (b.ok && b.data?.length > 0) setPosts(b.data) })
-      .catch(() => {})
+    fetchNews().then(n => { if (n) setPosts(n) })
   }, [])
 
   return (

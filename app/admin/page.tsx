@@ -51,6 +51,11 @@ export default function AdminPage() {
   const [nlSavingSettings, setNlSavingSettings] = useState(false)
   const [nlImporting, setNlImporting] = useState(false)
   const [printingReg, setPrintingReg] = useState(false)
+  // Supabase sinhronizacija novic
+  const [syncSettings, setSyncSettings] = useState<{ url: string; hasKey: boolean }>({ url: '', hasKey: false })
+  const [syncKeyInput, setSyncKeyInput] = useState('')
+  const [syncing, setSyncing] = useState(false)
+  const [savingSync, setSavingSync] = useState(false)
 
   // Obnovi JWT iz sessionStorage
   useEffect(() => {
@@ -90,7 +95,40 @@ export default function AdminPage() {
     } catch {}
   }, [])
 
-  useEffect(() => { if (token) { fetchNews(token); fetchConfig(); fetchLiga(token); fetchNewsletter(token) } }, [token, fetchNews, fetchConfig, fetchLiga, fetchNewsletter])
+  const fetchSync = useCallback(async (tok: string) => {
+    try {
+      const r = await fetch(`${API}/news/sync-settings`, { headers: { Authorization: `Bearer ${tok}` } })
+      const b = await r.json()
+      if (b.ok) setSyncSettings(b.data)
+    } catch {}
+  }, [])
+
+  useEffect(() => { if (token) { fetchNews(token); fetchConfig(); fetchLiga(token); fetchNewsletter(token); fetchSync(token) } }, [token, fetchNews, fetchConfig, fetchLiga, fetchNewsletter, fetchSync])
+
+  async function saveSyncSettings() {
+    if (!token) return
+    setSavingSync(true); setMsg('')
+    try {
+      const body: Record<string, string> = {}
+      if (syncKeyInput.trim()) body.serviceKey = syncKeyInput.trim()
+      const r = await fetch(`${API}/news/sync-settings`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(body) })
+      const b = await r.json()
+      if (!b.ok) { setMsg('Napaka pri shranjevanju ključa'); return }
+      setMsg('Supabase ključ shranjen.'); setSyncKeyInput('')
+      await fetchSync(token)
+    } catch { setMsg('Napaka pri shranjevanju') } finally { setSavingSync(false) }
+  }
+
+  async function syncNewsNow() {
+    if (!token) return
+    setSyncing(true); setMsg('')
+    try {
+      const r = await fetch(`${API}/news/sync`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } })
+      const b = await r.json()
+      if (!b.ok) { setMsg('Napaka pri sinhronizaciji: ' + (b.message ?? '')); return }
+      setMsg(`✓ Sinhronizirano ${b.data.synced} novic v Supabase.`)
+    } catch { setMsg('Napaka pri sinhronizaciji') } finally { setSyncing(false) }
+  }
 
   async function sendNewsletter() {
     if (!token) return
@@ -552,6 +590,34 @@ export default function AdminPage() {
 
         {/* Zavihek: Novice */}
         {tab === 'novice' && <>
+
+        {/* Supabase sinhronizacija novic */}
+        <div className="mb-6 p-5 rounded-2xl" style={{ background: '#131720', border: '1px solid rgba(255,255,255,0.07)' }}>
+          <div className="flex items-center justify-between gap-3 mb-1">
+            <div className="text-white font-semibold text-sm">Supabase sinhronizacija novic</div>
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full"
+              style={{ background: syncSettings.hasKey ? 'rgba(61,186,138,0.2)' : 'rgba(224,122,122,0.2)', color: syncSettings.hasKey ? '#3dba8a' : '#e07a7a' }}>
+              {syncSettings.hasKey ? 'nastavljeno' : 'ni ključa'}
+            </span>
+          </div>
+          <div className="text-white/40 text-xs mb-3 leading-relaxed">
+            Novice se samodejno sinhronizirajo v Supabase, da so na strani vidne tudi, ko je ta računalnik ugasnjen.
+            Vnesi service_role ključ (Supabase → Settings → API).
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <input type="password" value={syncKeyInput} onChange={e => setSyncKeyInput(e.target.value)}
+              placeholder={syncSettings.hasKey ? '•••• (pusti prazno = brez spremembe)' : 'service_role ključ'} className={inp} style={inpStyle} />
+            <button onClick={saveSyncSettings} disabled={savingSync}
+              className="px-4 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-40 hover:brightness-110 whitespace-nowrap" style={{ background: '#4f6bbd' }}>
+              {savingSync ? 'Shranjujem…' : 'Shrani ključ'}
+            </button>
+            <button onClick={syncNewsNow} disabled={syncing || !syncSettings.hasKey}
+              className="px-4 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-40 hover:brightness-110 whitespace-nowrap" style={{ background: '#3dba8a' }}>
+              {syncing ? 'Sinhroniziram…' : 'Sinhroniziraj zdaj'}
+            </button>
+          </div>
+        </div>
+
 
         {/* Seznam novic */}
         <div className="space-y-3">
