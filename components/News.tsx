@@ -21,11 +21,31 @@ function fmtDate(ms: number) {
   return new Date(ms).toLocaleDateString('sl-SI', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
+// Vizual novice: enotno ozadje z logotipom ŠRC — VEDNO ENAKO za vse novice.
+// Če ima novica svojo sliko, jo pokaže čez; sicer ostane enotni logotip (brez utripanja).
+function NewsVisual({ post }: { post: NewsPost }) {
+  const src = post.image_url
+    ? (post.image_url.startsWith('http') ? post.image_url : `${BP}${post.image_url}`)
+    : null
+  return (
+    <div className="relative h-44 overflow-hidden flex items-center justify-center"
+         style={{ background: 'linear-gradient(135deg, rgba(79,107,189,0.18), #0f131b)' }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={`${BP}/logo.png`} alt="" aria-hidden className="w-16 h-16 object-contain opacity-25" />
+      {src && (
+        /* eslint-disable-next-line @next/next/no-img-element */
+        <img src={src} alt={post.title} className="absolute inset-0 w-full h-full object-cover"
+             onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+      )}
+    </div>
+  )
+}
+
 export default function News() {
-  const [posts, setPosts] = useState<NewsPost[]>(FALLBACK)
+  const [posts, setPosts] = useState<NewsPost[] | null>(null)
 
   useEffect(() => {
-    fetchNews().then(n => { if (n) setPosts(n) })
+    fetchNews().then(n => setPosts(n ?? FALLBACK))
   }, [])
 
   return (
@@ -35,30 +55,35 @@ export default function News() {
           NOVICE
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {posts.map((post) => {
-            const color = catColor[post.category] ?? '#3dba8a'
-            return (
-              <article key={post.id} className="rounded-xl overflow-hidden flex flex-col"
-                       style={{ background: '#131720', border: '1px solid rgba(255,255,255,0.07)' }}>
-                <div className="relative h-44 overflow-hidden" style={{ background: '#1a1f2e' }}>
-                  {post.image_url && (
-                    <img src={post.image_url.startsWith('http') ? post.image_url : `${BP}${post.image_url}`}
-                         alt={post.title} className="w-full h-full object-cover"
-                         onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
-                  )}
-                </div>
-                <div className="p-5 flex flex-col flex-1">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-6 h-6 rounded-full flex-shrink-0" style={{ background: color }} />
-                    <span className="text-xs font-semibold uppercase tracking-wider" style={{ color }}>{post.category}</span>
-                    <span className="ml-auto text-xs text-white/30">{fmtDate(post.published_at)}</span>
+          {posts === null
+            ? [0, 1, 2].map(i => (
+                <div key={i} className="rounded-xl overflow-hidden animate-pulse"
+                     style={{ background: '#131720', border: '1px solid rgba(255,255,255,0.07)' }}>
+                  <div className="h-44" style={{ background: '#1a1f2e' }} />
+                  <div className="p-5 space-y-3">
+                    <div className="h-3 w-24 rounded" style={{ background: '#1a1f2e' }} />
+                    <div className="h-4 w-3/4 rounded" style={{ background: '#1a1f2e' }} />
                   </div>
-                  <h3 className="text-sm font-bold text-white mb-2 leading-snug">{post.title}</h3>
-                  <p className="text-xs text-white/50 leading-relaxed flex-1">{post.excerpt}</p>
                 </div>
-              </article>
-            )
-          })}
+              ))
+            : posts.map((post) => {
+                const color = catColor[post.category] ?? '#3dba8a'
+                return (
+                  <article key={post.id} className="rounded-xl overflow-hidden flex flex-col"
+                           style={{ background: '#131720', border: '1px solid rgba(255,255,255,0.07)' }}>
+                    <NewsVisual post={post} />
+                    <div className="p-5 flex flex-col flex-1">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-6 h-6 rounded-full flex-shrink-0" style={{ background: color }} />
+                        <span className="text-xs font-semibold uppercase tracking-wider" style={{ color }}>{post.category}</span>
+                        <span className="ml-auto text-xs text-white/30">{fmtDate(post.published_at)}</span>
+                      </div>
+                      <h3 className="text-sm font-bold text-white mb-2 leading-snug">{post.title}</h3>
+                      <p className="text-xs text-white/50 leading-relaxed flex-1">{post.excerpt}</p>
+                    </div>
+                  </article>
+                )
+              })}
         </div>
       </div>
     </section>

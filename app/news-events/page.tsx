@@ -28,13 +28,13 @@ function NewsContent() {
   const router = useRouter()
   const postSlug = searchParams.get('post')
 
-  const [posts, setPosts] = useState<NewsPost[]>(FALLBACK)
+  const [posts, setPosts] = useState<NewsPost[]>([])
   const [filter, setFilter] = useState<string>('vse')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     fetchNews()
-      .then(n => { if (n) setPosts(n) })
+      .then(n => setPosts(n ?? FALLBACK))
       .finally(() => setLoading(false))
   }, [])
 
@@ -165,11 +165,13 @@ function NewsContent() {
                 >
                   <button
                     onClick={() => post.slug && router.push(`/news-events?post=${post.slug}`)}
-                    className="relative h-52 overflow-hidden block w-full text-left"
-                    style={{ background: '#1a1f2e' }}
+                    className="relative h-52 overflow-hidden block w-full text-left flex items-center justify-center"
+                    style={{ background: 'linear-gradient(135deg, rgba(79,107,189,0.18), #0f131b)' }}
                   >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={`${BP}/logo.png`} alt="" aria-hidden className="w-16 h-16 object-contain opacity-25" />
                     {imgSrc && (
-                      <img src={imgSrc} alt={post.title} className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                      <img src={imgSrc} alt={post.title} className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 hover:scale-105"
                            onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
                     )}
                     <div className="absolute top-3 left-3 px-2 py-0.5 rounded text-xs font-semibold uppercase text-white" style={{ background: color }}>
