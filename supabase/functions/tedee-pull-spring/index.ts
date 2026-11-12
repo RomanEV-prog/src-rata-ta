@@ -102,6 +102,8 @@ Deno.serve(async (req) => {
   // Počakaj 1 sekundo, potem ponovno preveri stanje
   await new Promise(resolve => setTimeout(resolve, 1000));
 
+  // MORA biti odprta, inače je error
+  let isActuallyUnlocked = false;
   try {
     const verifyRes = await fetch(`${TEDEE_API}/my/lock/${lockId}`, {
       headers: { Authorization: `PersonalKey ${tedeeToken}` },
@@ -110,24 +112,25 @@ Deno.serve(async (req) => {
     if (verifyRes.ok) {
       const verifyData = await verifyRes.json();
       const verifyState = verifyData?.result?.lockProperties?.state;
-      const verifyUnlocked = verifyState === 2 || verifyState === 6;
-
-      if (!verifyUnlocked) {
-        // Pull Spring je bil sprožen, ampak vrata ostanejo zaklenjena
-        await logEvent(supabaseUrl, serviceKey, "locked", "error", "Pull Spring sprožen, ampak vrata ostanejo zaklenjena", openedBy, groupId, groupName);
-        return json({
-          success: false,
-          lockState: "locked",
-          message: "Vrata ostanejo zaklenjena. Ključavnica je morda v napaki."
-        }, 200);
-      }
+      isActuallyUnlocked = verifyState === 2 || verifyState === 6;
     }
   } catch (e) {
-    // Ako verify pade - zasitniji pristup: vrati error
+    // Verify pade - error
     await logEvent(supabaseUrl, serviceKey, "unknown", "error", "Verify failed: " + String(e), openedBy, groupId, groupName);
-    return json({ success: false, lockState: "unknown", message: "Vrata se morda odpirajo, ampak ne morem preveri stanja." }, 200);
+    return json({ success: false, message: "Ne mogu provjeriti stanje vrata." }, 502);
   }
 
+  // Ako vrata NISU odprta - ERROR
+  if (!isActuallyUnlocked) {
+    await logEvent(supabaseUrl, serviceKey, "locked", "denied_locked", "Pull Spring sprožen, ali vrata su ostala zaklenjena", openedBy, groupId, groupName);
+    return json({
+      success: false,
+      lockState: "locked",
+      message: "❌ Vrata su ostala zaklenjena. Ključavnica nije odgovorila pravilno."
+    }, 200);
+  }
+
+  // Samo sad: vrata su DOISTA odprta!
   await logEvent(supabaseUrl, serviceKey, "unlocked", "success", null, openedBy, groupId, groupName);
   return json({ success: true, lockState: "unlocked", message: "✅ Vrata se odpirajo!" }, 200);
 });
