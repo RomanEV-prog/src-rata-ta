@@ -65,28 +65,24 @@ Deno.serve(async (req) => {
     const filledBytes  = await pdfDoc.save()
     const filledBase64 = btoa(String.fromCharCode(...new Uint8Array(filledBytes)))
 
-    // 3. Sestavi HTML email
+    // 3. Sestavi KRATKO telo — glavni dokument je priložena izpolnjena prijavnica.
+    //    V telo gredo le podatki, ki jih na prijavnici NI (e-pošta, telefon …),
+    //    da ni podvojevanja obrazca. Na mejl se odgovori neposredno prijavitelju
+    //    (reply_to = njegova e-pošta).
     const htmlEmail = `
 <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
-  <div style="background:#1a2540;padding:24px;border-radius:8px 8px 0 0">
-    <h2 style="color:#fff;margin:0">SD Fenix — Nova prijava na ligo</h2>
-    <p style="color:rgba(255,255,255,.6);margin:4px 0 0;font-size:13px">Izpolnjena prijavnica je priložena temu emailu.</p>
+  <div style="background:#1a2540;padding:20px 24px;border-radius:8px 8px 0 0">
+    <h2 style="color:#fff;margin:0;font-size:18px">Nova prijava na Zimsko ligo Fenix</h2>
   </div>
-  <table style="width:100%;border-collapse:collapse;border:1px solid #ddd;border-top:none">
-    ${tableRow('Ime in priimek', `${first_name} ${last_name}`)}
-    ${tableRow('E-mail', email)}
-    ${tableRow('Telefon', phone || '—')}
-    ${tableRow('Datum rojstva', date_of_birth || '—')}
-    ${tableRow('Društvo', society || '—')}
-    ${tableRow('Disciplina', discipline || '—')}
-    ${tableRow('Opomba', note || '—')}
-    <tr>
-      <td style="padding:8px 12px;background:#f5f5f5;font-weight:600;color:#333;border-bottom:1px solid #ddd">Pravila prebrana</td>
-      <td style="padding:8px 12px;color:#1a7a40;font-weight:700;border-bottom:1px solid #ddd">✅ Da — potrjeno ob oddaji spletnega obrazca</td>
-    </tr>
-  </table>
-  <div style="background:#f9f9f9;padding:14px 16px;border:1px solid #ddd;border-top:none;border-radius:0 0 8px 8px;font-size:12px;color:#888">
-    Oddano: ${today} · Vir: strelisce-maribor.si spletni obrazec
+  <div style="padding:18px 24px;border:1px solid #ddd;border-top:none;border-radius:0 0 8px 8px;font-size:14px;color:#333;line-height:1.7">
+    <p style="margin:0 0 14px">Izpolnjena <b>prijavnica</b> je priložena temu sporočilu (PDF).</p>
+    <p style="margin:0;color:#555;font-size:13px">
+      <b>Prijavitelj:</b> ${esc(first_name)} ${esc(last_name)}<br>
+      <b>E-pošta:</b> ${esc(email)}<br>
+      <b>Telefon:</b> ${esc(phone || '—')}<br>
+      <b>Datum rojstva:</b> ${esc(date_of_birth || '—')}${note ? `<br><b>Opomba:</b> ${esc(note)}` : ''}
+    </p>
+    <p style="margin:14px 0 0;font-size:12px;color:#999">Oddano: ${today} · strelisce-maribor.si · pravila potrjena ob oddaji</p>
   </div>
 </div>`
 
@@ -99,7 +95,7 @@ Deno.serve(async (req) => {
       headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         from:    'SD Fenix Prijave <prijave@adlerhub.eu>',
-        to:      ['src.ratata@gmail.com'],
+        to:      ['feniks.sd01@gmail.com'],
         reply_to: email,
         subject: `Nova prijava na SD Fenix ligo — ${first_name} ${last_name}`,
         html:    htmlEmail,
@@ -127,10 +123,3 @@ Deno.serve(async (req) => {
   }
 })
 
-function tableRow(label: string, val: string) {
-  // label je statičen (zaupan), val je uporabniški vnos → pobegni.
-  return `<tr>
-    <td style="padding:8px 12px;background:#f5f5f5;font-weight:600;color:#333;width:160px;border-bottom:1px solid #ddd">${label}</td>
-    <td style="padding:8px 12px;color:#222;border-bottom:1px solid #ddd">${esc(val)}</td>
-  </tr>`
-}
