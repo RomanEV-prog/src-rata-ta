@@ -16,12 +16,12 @@ const AKTIVNOSTI = [
   { ime: "Arcade igre",      href: "/paketi",        barva: "#8e44ad" },
 ]
 
+// Ostali sostanovalci (ŠRC je prikazan posebej, večji, nad njimi).
 const PARTNERJI = [
-  { ime: "ŠRC Ra-Ta-Ta",         logo: `${BP}/logo.png`,             logoBg: "transparent", url: null },
   { ime: "SD Fenix",             logo: `${BP}/logos/fenix.jpg`,      logoBg: "#fff",        url: "/clanstvo/sd-fenix", intern: true },
-  { ime: "Jiujitsu Ambition",    logo: `${BP}/logos/ambition.png`,   logoBg: "#111",        url: "https://mmaribor.si" },
-  { ime: "Razgoršek",            logo: `${BP}/logos/razgorsek.png`,  logoBg: "#fff",        url: "https://www.razgorsek.si" },
   { ime: "Roman's Cakes",        logo: `${BP}/logos/romancakes.png`, logoBg: "#1a1200",     url: "https://www.romancakes.com" },
+  { ime: "Razgoršek",            logo: `${BP}/logos/razgorsek.png`,  logoBg: "#fff",        url: "https://www.razgorsek.si" },
+  { ime: "Jiujitsu Ambition",    logo: `${BP}/logos/ambition.png`,   logoBg: "#111",        url: "https://mmaribor.si" },
 ]
 
 export default function Hero() {
@@ -39,19 +39,45 @@ export default function Hero() {
       </video>
       <div className="absolute inset-0" style={{ background: "rgba(13,15,20,0.5)" }} />
 
-      <div className="relative z-10 max-w-5xl mx-auto w-full px-4 sm:px-6 py-20 flex flex-col gap-12">
+      <div className="relative z-10 max-w-5xl mx-auto w-full px-4 sm:px-6 py-20 flex flex-col gap-10">
 
-        {/* 1. Logotipi — ZGORAJ, veliki */}
+        {/* 1. Naslov */}
+        <div className="text-center">
+          <h1
+            className="text-6xl sm:text-8xl font-black tracking-tight text-white uppercase mb-4"
+            style={{ letterSpacing: "-0.02em" }}
+          >
+            ŠRC RA-TA-TA
+          </h1>
+          <p className="text-lg sm:text-xl text-white/80 font-medium">
+            Več kot samo strelišče!
+          </p>
+        </div>
+
+        {/* 2. Logo ŠRC — središče objekta */}
+        <div className="flex flex-col items-center gap-3">
+          <div
+            className="w-44 h-44 sm:w-52 sm:h-52 rounded-3xl overflow-hidden flex items-center justify-center"
+            style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.12)" }}
+          >
+            <img src={`${BP}/logo.png`} alt="ŠRC Ra-Ta-Ta" className="w-full h-full object-contain p-2" />
+          </div>
+          <span className="text-xs font-semibold tracking-[0.25em] text-white/40 uppercase">
+            V središču objekta
+          </span>
+        </div>
+
+        {/* 3. Ostali sostanovalci — pod ŠRC */}
         <div>
           <p className="text-xs font-semibold tracking-[0.25em] text-white/30 uppercase text-center mb-6">
-            Kdo smo v objektu
+            Kdo je še v objektu
           </p>
           <div className="flex flex-wrap justify-center gap-6 sm:gap-10">
             {PARTNERJI.map((p) => {
               const logo = (
                 <div className="flex flex-col items-center gap-2 group cursor-pointer">
                   <div
-                    className="w-32 h-32 sm:w-40 sm:h-40 rounded-2xl overflow-hidden flex items-center justify-center transition-all duration-200 group-hover:scale-110 group-hover:brightness-125"
+                    className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden flex items-center justify-center transition-all duration-200 group-hover:scale-110 group-hover:brightness-125"
                     style={{ background: p.logoBg, border: "1px solid rgba(255,255,255,0.1)" }}
                   >
                     <img src={p.logo} alt={p.ime} className="w-full h-full object-contain p-2" />
@@ -68,29 +94,16 @@ export default function Hero() {
           </div>
         </div>
 
-        {/* 2. Naslov — kot prej */}
-        <div className="text-center">
-          <h1
-            className="text-6xl sm:text-8xl font-black tracking-tight text-white uppercase mb-4"
-            style={{ letterSpacing: "-0.02em" }}
-          >
-            ŠRC RA-TA-TA
-          </h1>
-          <p className="text-lg sm:text-xl text-white/80 mb-8 font-medium">
-            Več kot samo strelišče!
-          </p>
-
-          {/* Aktivnosti */}
-          <div className="flex flex-wrap justify-center gap-2">
-            {AKTIVNOSTI.map((a) => (
-              <Link key={a.ime} href={a.href}
-                className="px-4 py-2 rounded-full text-sm font-semibold transition-all hover:brightness-125 hover:scale-105"
-                style={{ background: a.barva + "25", color: a.barva, border: `1px solid ${a.barva}50` }}
-              >
-                {a.ime}
-              </Link>
-            ))}
-          </div>
+        {/* 4. Gumbi (aktivnosti) */}
+        <div className="flex flex-wrap justify-center gap-2">
+          {AKTIVNOSTI.map((a) => (
+            <Link key={a.ime} href={a.href}
+              className="px-4 py-2 rounded-full text-sm font-semibold transition-all hover:brightness-125 hover:scale-105"
+              style={{ background: a.barva + "25", color: a.barva, border: `1px solid ${a.barva}50` }}
+            >
+              {a.ime}
+            </Link>
+          ))}
         </div>
 
       </div>
