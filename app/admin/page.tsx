@@ -2,6 +2,16 @@
 import { useState, useEffect, useCallback } from 'react'
 
 const API = 'https://rangeos-api.adlerhub.eu'
+const BP = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
+
+// Imena polj v predlogi prijavnice (public/prijavnica-liga-fenix.pdf) — isto kot
+// Supabase funkcija send-registration, da je tiskana prijavnica enaka poslani.
+const DISCIPLINE_CHECKBOX: Record<string, string> = {
+  'Pištola/revolver s središčnim vžigom 15m (samo začetniki)': 'checkbox_165v4a',
+  'Pištola s središčnim vžigom 25m dvoročno':                  'checkbox_175u8y',
+  'Revolver s središčnim vžigom 25m enoročno':                 'checkbox_189d3t',
+  'Pištola/revolver standardna cal. .22 L.R., 25m enoročno':  'checkbox_196v0s',
+}
 
 interface NewsPost { id: number; title: string; excerpt: string | null; content: string | null; category: string; image_url: string | null; slug: string | null; is_published: number; published_at: number }
 interface LigaReg { id: number; first_name: string; last_name: string; email: string; phone: string | null; date_of_birth: number | null; society: string | null; discipline: string | null; note: string | null; status: string; submitted_at: number }
@@ -40,6 +50,7 @@ export default function AdminPage() {
   const [nlKeyInput, setNlKeyInput] = useState('')
   const [nlSavingSettings, setNlSavingSettings] = useState(false)
   const [nlImporting, setNlImporting] = useState(false)
+  const [printingReg, setPrintingReg] = useState(false)
 
   // Obnovi JWT iz sessionStorage
   useEffect(() => {
@@ -99,6 +110,43 @@ export default function AdminPage() {
       setNlSel([]); setNlSubject(''); setNlIntro('')
     } catch { setMsg('Napaka pri pošiljanju') }
     finally { setNlSending(false) }
+  }
+
+  // Natisni vse prejete prijavnice na ligo: izpolni PDF predlogo za vsako prijavo
+  // (ista polja kot poslani mejl) in jih združi v en PDF za tisk.
+  async function printAllPrijavnice(regs: LigaReg[]) {
+    if (regs.length === 0) { setMsg('Ni prijav za tisk.'); return }
+    setPrintingReg(true); setMsg('')
+    try {
+      const { PDFDocument } = await import('pdf-lib')
+      const res = await fetch(`${BP}/prijavnica-liga-fenix.pdf`)
+      if (!res.ok) throw new Error('predloge ni mogoče naložiti')
+      const tplBytes = await res.arrayBuffer()
+
+      const merged = await PDFDocument.create()
+      for (const reg of regs) {
+        const doc = await PDFDocument.load(tplBytes)
+        const form = doc.getForm()
+        const setText = (name: string, val: string) => { try { form.getTextField(name).setText(val) } catch {} }
+        setText('text_10o9i', `${reg.first_name} ${reg.last_name}`.trim())
+        setText('text_147w5p', new Date(reg.submitted_at).toLocaleDateString('sl-SI'))
+        setText('text_151t6a', reg.society ?? '')
+        const cb = DISCIPLINE_CHECKBOX[reg.discipline ?? '']
+        if (cb) { try { form.getCheckBox(cb).check() } catch {} }
+        form.flatten()
+        const pages = await merged.copyPages(doc, doc.getPageIndices())
+        pages.forEach(p => merged.addPage(p))
+      }
+
+      const bytes = await merged.save()
+      const blob = new Blob([bytes.slice().buffer], { type: 'application/pdf' })
+      const url = URL.createObjectURL(blob)
+      const w = window.open(url, '_blank')
+      if (!w) { setMsg('Brskalnik je blokiral novo okno — dovoli pojavna okna za to stran.'); return }
+      setMsg(`✓ Pripravljenih ${regs.length} prijavnic — v odprtem zavihku natisni s Ctrl+P.`)
+    } catch (e) {
+      setMsg('Napaka pri pripravi PDF: ' + (e instanceof Error ? e.message : 'neznana'))
+    } finally { setPrintingReg(false) }
   }
 
   async function importMembers() {
@@ -321,6 +369,14 @@ export default function AdminPage() {
         {/* Zavihek: Prijave na ligo */}
         {tab === 'liga' && (
           <div className="space-y-3">
+            {ligaRegs.length > 0 && (
+              <div className="flex justify-end">
+                <button onClick={() => printAllPrijavnice(ligaRegs)} disabled={printingReg}
+                  className="px-4 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-40 hover:brightness-110" style={{ background: '#3dba8a' }}>
+                  {printingReg ? 'Pripravljam…' : `🖨 Natisni vse prijavnice (${ligaRegs.length})`}
+                </button>
+              </div>
+            )}
             {ligaRegs.length === 0 && <p className="text-white/30 text-sm text-center py-10">Ni prijav</p>}
             {ligaRegs.map(reg => (
               <div key={reg.id} className="p-4 rounded-xl" style={{ background: '#131720', border: '1px solid rgba(255,255,255,0.07)' }}>
