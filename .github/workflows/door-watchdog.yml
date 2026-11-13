@@ -11,19 +11,18 @@ jobs:
     steps:
       - name: Trigger door-watchdog function
         env:
-          # Nastavi v GitHub → Settings → Secrets → Actions (ista vrednost kot
-          # WATCHDOG_SECRET v Supabase). Dokler ni nastavljen, velja stara vrednost.
+          # GitHub → Settings → Secrets → Actions; ista vrednost kot WATCHDOG_SECRET
+          # v Supabase (Edge Functions → Secrets).
           WATCHDOG_SECRET: ${{ secrets.WATCHDOG_SECRET }}
           # Funkcija zahteva veljaven JWT (»Verify JWT«); javni anon ključ zadošča.
           # Brez te glave je čuvaj tiho vračal 401 in vrat ni upravljal.
           SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
         run: |
-          SECRET="${WATCHDOG_SECRET:-door-watchdog-2026-src}"
           # --fail-with-body: zagon pade (rdeč), če funkcija vrne napako —
           # prej je bil zagon zelen tudi ob 401/500.
           curl --fail-with-body -sS -X POST \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
-            -H "x-watchdog-secret: ${SECRET}" \
+            -H "x-watchdog-secret: ${WATCHDOG_SECRET}" \
             -d '{}' \
             https://vlzyrcdrvvhxvdvuxgki.supabase.co/functions/v1/door-watchdog
