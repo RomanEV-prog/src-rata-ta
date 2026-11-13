@@ -55,61 +55,44 @@ Deno.serve(async (req) => {
     const state = lockData?.result?.lockProperties?.state;
     const isUnlocked = state === 2 || state === 6;
 
-    // Če je dnevni način aktiven in vrata so zakljenjena, jih ponovno odkleni
-    if (isDayMode && !isUnlocked) {
-      await fetch(`${TEDEE_API}/my/lock/${lockId}/operation/pull`, {
-        method: "POST",
-        headers: {
-          Authorization: `PersonalKey ${tedeeToken}`,
-          "Content-Type": "application/json",
-        },
-      });
-    }
+    // Ura v Ljubljani — pravilno poleti IN pozimi. Prej fiksni +2, zato je pozimi
+    // zaklepalo že ob 21:00 namesto ob 22:00.
+    const hour = Number(
+      new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Ljubljana", hour: "2-digit", hourCycle: "h23" })
+        .format(new Date()),
+    );
+    // Nočno okno 22:00–05:00: dnevni način ne velja.
+    const isNight = hour >= 22 || hour < 5;
 
-    // Preveri ali je čas za zaklepanje (22:00)
-    const now = new Date();
-    const hour = now.getUTCHours() + 2; // Ljubljana timezone (+2)
-    if (hour >= 22 && isDayMode && isUnlocked) {
-      // Zakleni in izključi dnevni način
-      await fetch(`${TEDEE_API}/my/lock/${lockId}/operation/lock`, {
+    const tedee = (op: string) =>
+      fetch(`${TEDEE_API}/my/lock/${lockId}/operation/${op}`, {
         method: "POST",
-        headers: {
-          Authorization: `PersonalKey ${tedeeToken}`,
-          "Content-Type": "application/json",
-        },
+        headers: { Authorization: `PersonalKey ${tedeeToken}`, "Content-Type": "application/json" },
       });
-
-      // Posodobi DB
-      await fetch(`${supabaseUrl}/rest/v1/door_automation?id=neq.null`, {
+    const saveState = (patch: Record<string, unknown>) =>
+      fetch(`${supabaseUrl}/rest/v1/door_automation?id=neq.null`, {
         method: "PATCH",
         headers: {
           "apikey": serviceKey,
           "Authorization": `Bearer ${serviceKey}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          is_day_mode: false,
-          last_checked_at: new Date().toISOString(),
-          last_state: "auto_locked_22h",
-        }),
+        body: JSON.stringify({ last_checked_at: new Date().toISOString(), ...patch }),
       });
+
+    if (isDayMode && isNight) {
+      // Konec dneva: zakleni (če so odklenjena) in izklopi dnevni način. Ponoči
+      // NIKOLI ne odklepamo — prej je čuvaj ročno zaklenjena vrata po 22:00
+      // najprej odklenil in jih zaklenil šele ob naslednjem zagonu.
+      if (isUnlocked) await tedee("lock");
+      await saveState({ is_day_mode: false, last_state: "auto_locked_22h" });
     } else {
-      // Samo posodobi čas zadnjega preverjanja
-      await fetch(`${supabaseUrl}/rest/v1/door_automation?id=neq.null`, {
-        method: "PATCH",
-        headers: {
-          "apikey": serviceKey,
-          "Authorization": `Bearer ${serviceKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          last_checked_at: new Date().toISOString(),
-          last_state: isDayMode && isUnlocked ? "day_mode_active" : "idle",
-        }),
-      });
+      // Podnevi: dnevni način aktiven in vrata zaklenjena → ponovno odkleni.
+      if (isDayMode && !isUnlocked) await tedee("pull");
+      await saveState({ last_state: isDayMode && isUnlocked ? "day_mode_active" : "idle" });
     }
 
-    return new Response(JSON.stringify({ ok: true, isDayMode, isUnlocked }), {
+    return new Response(JSON.stringify({ ok: true, isDayMode, isUnlocked, hour, isNight }), {
       status: 200,
       headers: { ...CORS, "Content-Type": "application/json" },
     });
