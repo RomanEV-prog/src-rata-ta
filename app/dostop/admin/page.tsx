@@ -28,7 +28,13 @@ type DoorAutomation = {
   last_state: string | null;
 };
 
-const BASE_URL = "https://romanev-prog.github.io/src-rata-ta/dostop";
+// Naslov za QR kode: stran /dostop na ISTI domeni, kjer je odprt ta admin
+// (prej trdo github.io zrcalo). Ključ je za # in se hrani v brskalniku po domeni.
+const BP = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+const BASE_URL =
+  typeof window !== "undefined"
+    ? `${window.location.origin}${BP}/dostop/`
+    : "https://www.strelisce-maribor.si/dostop/";
 
 export default function AdminPage() {
   const [loading, setLoading] = useState(true);

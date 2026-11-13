@@ -1,5 +1,11 @@
 import PageHero from "@/components/PageHero";
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Paketi streljanja",
+  description: "Strelski paketi s pravim orožjem pod vodstvom inštruktorja — Revolver, Pištola/puška, Tactical in Elite. Strelišče Maribor.",
+};
 
 const CMS = "https://cms.strelisce-maribor.si/uploads";
 
@@ -51,12 +57,12 @@ const packages = [
 const steps = [
   {
     num: "1",
-    text: "S prihodom na strelišče podpišete izjavo, ki bo rokovala z orožjem pisno zagotovili, da ste opravilni in niste pod vplivom substanc.",
+    text: "Ob prihodu na strelišče podpišete izjavo, s katero pisno zagotovite, da ste opravilno sposobni in niste pod vplivom substanc.",
     image: `${CMS}/podpis_83ae0319c6.jpeg`,
   },
   {
     num: "2",
-    text: "Preden vstopimo na strelišče, vam vodja streljanja obrazloži osnove varnega rokovanja z orožjem: - delovanje orožja izbranega paketa, - elemente strelskega položaja – prijem orodja, strelski položaj, merjen, proženje.",
+    text: "Preden vstopimo na strelišče, vam vodja streljanja obrazloži osnove varnega rokovanja z orožjem: - delovanje orožja izbranega paketa, - elemente strelskega položaja – prijem orožja, strelski položaj, merjenje, proženje.",
     image: `${CMS}/varne_osnove_5870d8e7e2.png`,
   },
   {
@@ -78,7 +84,7 @@ export default function PaketiPage() {
             KAJ JE PAKET STRELJANJA IN KDO SE GA LAHKO UDELEŽI?
           </h2>
           <p className="text-white/60 leading-relaxed">
-            Strelski paket je časovno strešena aktivnost s pravim orožjem, ki se je lahko udeleži vsaka polnoletna oseba. Vsi paketi so v ceni vključeni vodnik.
+            Strelski paket je časovno omejena aktivnost s pravim orožjem, ki se je lahko udeleži vsaka polnoletna oseba. V ceno vseh paketov je vključen vodnik.
           </p>
         </div>
       </section>

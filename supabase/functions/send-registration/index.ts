@@ -2,7 +2,7 @@ import { PDFDocument } from 'npm:pdf-lib@1.17.1'
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
 const DISCIPLINE_CHECKBOX: Record<string, string> = {

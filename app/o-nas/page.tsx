@@ -1,4 +1,10 @@
 import PageHero from "@/components/PageHero";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "O nas",
+  description: "Civilno strelišče v Mariboru z osmimi strelnimi mesti, v obratovanju od leta 2013. Spoznajte ekipo ŠRC Ra-Ta-Ta.",
+};
 
 const CMS = "https://cms.strelisce-maribor.si/uploads";
 

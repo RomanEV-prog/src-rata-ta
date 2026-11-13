@@ -1,4 +1,10 @@
 import PageHero from "@/components/PageHero";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Ceniki",
+  description: "Cenik najema strelnih linij, inštruktorja in usposabljanj na strelišču ŠRC Ra-Ta-Ta Maribor.",
+};
 
 const CMS = "https://cms.strelisce-maribor.si/uploads";
 

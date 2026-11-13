@@ -1,18 +1,24 @@
 import PageHero from "@/components/PageHero";
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Inštrukcije streljanja",
+  description: "Individualne inštrukcije streljanja za začetnike, napredne in tekmovalce.",
+};
 
 const CMS = "https://cms.strelisce-maribor.si/uploads";
 
 const levels = [
   {
     title: "Začetnik",
-    desc: "Za tiste, ki se prvič srečajo z orožjem. Naučite se osnov varnega ravnanja, pravilnega drže in sproščenega proženja.",
+    desc: "Za tiste, ki se prvič srečajo z orožjem. Naučite se osnov varnega ravnanja, pravilne drže in sproščenega proženja.",
     duration: "1,5 ure",
     price: "65 €",
   },
   {
     title: "Napredni",
-    desc: "Za strelce z že pridobljenim osnovi znanjem. Izpopolnite tehniko, natančnost in hitrost.",
+    desc: "Za strelce z že pridobljenim osnovnim znanjem. Izpopolnite tehniko, natančnost in hitrost.",
     duration: "2 uri",
     price: "85 €",
   },

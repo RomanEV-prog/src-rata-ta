@@ -3,7 +3,7 @@ import type { Metadata, Viewport } from "next";
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 export const metadata: Metadata = {
-  title: "Dostop — ŠRC Ra-Ta-Ta",
+  title: "Dostop",
   description: "Odpiranje vhodnih vrat ŠRC Ra-Ta-Ta",
   manifest: `${basePath}/manifest.json`,
   appleWebApp: {

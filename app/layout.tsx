@@ -9,8 +9,18 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "ŠRC Ra-Ta-Ta | Strelišče Maribor",
-  description: "Več kot samo strelišče! Paketi, teambuildingi, izobraževanja.",
+  metadataBase: new URL("https://www.strelisce-maribor.si"),
+  title: {
+    default: "ŠRC Ra-Ta-Ta | Strelišče Maribor",
+    template: "%s | ŠRC Ra-Ta-Ta",
+  },
+  description: "Več kot samo strelišče! Strelski paketi, teambuildingi, izobraževanja in strelska liga v Mariboru.",
+  openGraph: {
+    type: "website",
+    locale: "sl_SI",
+    siteName: "ŠRC Ra-Ta-Ta — Strelišče Maribor",
+    images: ["/hero-poster.jpg"],
+  },
 };
 
 export default function RootLayout({

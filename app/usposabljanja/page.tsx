@@ -1,12 +1,18 @@
 import PageHero from "@/components/PageHero";
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Izobraževanja",
+  description: "Usposabljanje za varno ravnanje z orožjem in preizkus znanja v Mariboru.",
+};
 
 const CMS = "https://cms.strelisce-maribor.si/uploads";
 
 const courses = [
   {
     title: "Usposabljanje za varno ravnanje z orožjem",
-    desc: "Dvodni tečaj za pridobitev potrdila o varnem ravnanju z orožjem. Pogoj za pridobitev dovoljenja za nošnjo orožja.",
+    desc: "Dvodnevni tečaj za pridobitev potrdila o varnem ravnanju z orožjem. Pogoj za pridobitev dovoljenja za nošnjo orožja.",
     duration: "2 dni",
     price: "195 €/osebo",
     highlight: true,

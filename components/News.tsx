@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { fetchNews, type NewsPost } from '@/lib/news'
 
 const BP = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
@@ -69,8 +70,10 @@ export default function News() {
             : posts.map((post) => {
                 const color = catColor[post.category] ?? '#3dba8a'
                 return (
-                  <article key={post.id} className="rounded-xl overflow-hidden flex flex-col"
-                           style={{ background: '#131720', border: '1px solid rgba(255,255,255,0.07)' }}>
+                  <Link key={post.id}
+                        href={post.slug ? `/news-events?post=${encodeURIComponent(post.slug)}` : '/news-events'}
+                        className="rounded-xl overflow-hidden flex flex-col transition-transform hover:-translate-y-1"
+                        style={{ background: '#131720', border: '1px solid rgba(255,255,255,0.07)' }}>
                     <NewsVisual post={post} />
                     <div className="p-5 flex flex-col flex-1">
                       <div className="flex items-center gap-2 mb-3">
@@ -81,7 +84,7 @@ export default function News() {
                       <h3 className="text-sm font-bold text-white mb-2 leading-snug">{post.title}</h3>
                       <p className="text-xs text-white/50 leading-relaxed flex-1">{post.excerpt}</p>
                     </div>
-                  </article>
+                  </Link>
                 )
               })}
         </div>

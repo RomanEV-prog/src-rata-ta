@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# strelisce-maribor.si — spletna stran ŠRC Ra-Ta-Ta
 
-## Getting Started
+Next.js (statični izvoz, `output: "export"`) + Tailwind. Brez lastnega strežnika:
+dinamični deli tečejo prek dveh zalednih sistemov.
 
-First, run the development server:
+| Del | Kje teče | Za kaj |
+|---|---|---|
+| RangeOS API | recepcijski PC, `rangeos-api.adlerhub.eu` | delovni čas, novice (vir), admin, rezervacije, live tarče, novičnik |
+| Supabase | `vlzyrcdrvvhxvdvuxgki.supabase.co` | novice (kopija za branje 24/7), vrata (`/dostop`), edge funkcije |
+
+Edge funkcije (`supabase/functions/`): `send-contact` (kontaktni obrazec),
+`send-registration` (prijavnica na ligo → Fenix), `tedee-pull-spring` in
+`door-watchdog` (vrata), `admin-add-member`.
+
+## Razvoj
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev        # http://localhost:3000
+npx tsc --noEmit   # tipkanje
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+`.env.local` potrebuje `NEXT_PUBLIC_SUPABASE_URL` in `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Objava — dva ločena cilja
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. **Živa stran (Neoserv cPanel, `/home/funpark/strelisce_new`)** — ROČNO.
+   `git push` žive strani NE posodobi.
 
-## Learn More
+   ```bash
+   mv .env.production .env.production.bak   # sicer slike kažejo na /src-rata-ta/…
+   npm run build
+   mv .env.production.bak .env.production
+   tar czf site.tar.gz -C out --exclude='./.htaccess' .
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+   Tarball naloži v docroot in razpakiraj (File Manager → Extract). `.htaccess`
+   na strežniku ostane (cache pravila, varnostne glave) — ni v tarballu.
+   Tarball po razpakiranju odstrani iz javne mape.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+2. **GitHub Pages zrcalo** (`romanev-prog.github.io/src-rata-ta`) — samodejno ob
+   `git push` na `main` (`.github/workflows/deploy.yml`, basePath `/src-rata-ta`).
+   Z zrcala edge funkcija bere predlogo prijavnice (PDF).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+3. **Edge funkcije** — Supabase dashboard → Edge Functions → Code → Deploy
+   (CLI na Windows ne deluje).
 
-## Deploy on Vercel
+## Pasti
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Stran teče na `www.` — RangeOS CORS mora dovoliti `www.strelisce-maribor.si`.
+- CSP na strežniku ne dovoli tujih okvirjev (zato ni vgrajenega zemljevida) in
+  omejuje `connect-src` na Supabase in RangeOS API.
+- `manifest.json` in `sw.js` uporabljata relativne poti, da `/dostop` deluje na
+  obeh domenah.
+- Skrivnosti (Resend, Tedee, `WATCHDOG_SECRET`) so v Supabase Secrets oziroma
+  GitHub Secrets — nikoli v kodi, repozitorij je javen.

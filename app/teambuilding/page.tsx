@@ -1,5 +1,11 @@
 import PageHero from "@/components/PageHero";
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Teambuildingi",
+  description: "Teambuilding za podjetja v Mariboru: streljanje, Lasermaxx, NERF, XXL namizni nogomet, biljard in pogostitev.",
+};
 
 const CMS = "https://cms.strelisce-maribor.si/uploads";
 

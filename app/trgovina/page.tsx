@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Trgovina — kmalu | ŠRC Ra-Ta-Ta",
+  title: "Trgovina — kmalu",
   description: "Spletna trgovina ŠRC Ra-Ta-Ta je v pripravi. Kmalu na voljo.",
 };
 

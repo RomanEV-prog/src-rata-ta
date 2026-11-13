@@ -81,11 +81,18 @@ export default function KontaktPage() {
     <>
       {/* Map placeholder + hero */}
       <div className="relative pt-14">
-        <div className="h-72 w-full" style={{ background: "#131720", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-          {/* TODO: Zamenjaj z Google Maps embed */}
-          <div className="w-full h-full flex items-center justify-center text-white/20 text-sm">
-            Ulica heroja Šaranovića 36, 2000 Maribor
-          </div>
+        {/* Brez vgrajenega zemljevida (CSP strani ne dovoli tujih okvirjev) — povezava na navigacijo. */}
+        <div className="w-full py-14 px-4 flex flex-col items-center justify-center gap-4 text-center" style={{ background: "#131720", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+          <div className="text-white font-semibold">Ulica heroja Šaranovića 36, 2000 Maribor</div>
+          <a
+            href="https://www.google.com/maps/search/?api=1&query=Ulica+heroja+%C5%A0aranovi%C4%87a+36%2C+2000+Maribor"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-all hover:brightness-110"
+            style={{ background: "#4f6bbd" }}
+          >
+            Odpri v Google Zemljevidih →
+          </a>
         </div>
       </div>
 

@@ -8,7 +8,7 @@ const UGODNOSTI = [
   { icon: '🎯', naslov: 'Prednostna rezervacija', opis: 'Člani imajo prednost pri rezervaciji prog in prejmejo obvestila o prostih terminih.' },
   { icon: '💶', naslov: 'Ugodnejši ceniki', opis: 'Članska cena strelišča je nižja od Walk-in cene. Več streljaš, več prihraniš.' },
   { icon: '📱', naslov: 'Aplikacija RangeOS', opis: 'Rezerviraj progo, poglej posnetek tarče in svojo statistiko kar iz telefona.' },
-  { icon: '🏆', naslov: 'Tekmovalna liga', opis: 'Nastopaj v ligaških tekmovanjih SD Fenix in se poteguješ za uvrstitev na lestvici.' },
+  { icon: '🏆', naslov: 'Tekmovalna liga', opis: 'Nastopaj v ligaških tekmovanjih SD Fenix in se poteguj za uvrstitev na lestvici.' },
   { icon: '📚', naslov: 'Usposabljanja', opis: 'Dostop do internih usposabljanj in predavanj o varnem ravnanju z orožjem.' },
   { icon: '🤝', naslov: 'Skupnost', opis: 'Postaneš del skupnosti strelcev, ki skrbi za varno in spoštljivo okolje na strelišču.' },
 ]

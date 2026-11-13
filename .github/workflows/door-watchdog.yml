@@ -10,9 +10,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger door-watchdog function
+        env:
+          # Nastavi v GitHub → Settings → Secrets → Actions (ista vrednost kot
+          # WATCHDOG_SECRET v Supabase). Dokler ni nastavljen, velja stara vrednost.
+          WATCHDOG_SECRET: ${{ secrets.WATCHDOG_SECRET }}
         run: |
-          curl -X POST \
+          SECRET="${WATCHDOG_SECRET:-door-watchdog-2026-src}"
+          # --fail-with-body: zagon pade (rdeč), če funkcija vrne napako —
+          # prej je bil zagon zelen tudi ob 401/500.
+          curl --fail-with-body -sS -X POST \
             -H "Content-Type: application/json" \
-            -H "x-watchdog-secret: door-watchdog-2026-src" \
+            -H "x-watchdog-secret: ${SECRET}" \
             -d '{}' \
             https://vlzyrcdrvvhxvdvuxgki.supabase.co/functions/v1/door-watchdog

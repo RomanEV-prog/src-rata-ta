@@ -131,12 +131,6 @@ export default function Footer() {
                   <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
                 </svg>
               </Link>
-              <Link href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="text-white/50 hover:text-white transition-colors">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 0 0 1.46 6.42 29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.96C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.96A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z" />
-                  <polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="#0a0c10" />
-                </svg>
-              </Link>
             </div>
             <div className="flex gap-5 text-xs text-white/40 mt-2">
               <Link href="/obrazci-zakoni" className="hover:text-white/70 transition-colors">Obrazci in zakonodaja</Link>
@@ -169,7 +163,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-10 pt-6 border-t border-white/5 text-center text-xs text-white/25">
-          © 2024 ŠRC Ra-Ta-Ta. All rights reserved.
+          © {new Date().getFullYear()} ŠRC Ra-Ta-Ta. Vse pravice pridržane.
         </div>
       </div>
     </footer>

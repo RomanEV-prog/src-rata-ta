@@ -10,9 +10,13 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: CORS });
   }
 
-  // Preveri secret header
+  // Preveri secret header. Skrivnost je v okolju funkcije (WATCHDOG_SECRET) in v
+  // GitHub secretu istega imena — NE v kodi (repozitorij je javen). Dokler
+  // WATCHDOG_SECRET ni nastavljen, velja stara vrednost, da avtomatika vrat med
+  // prehodom ne pade; po nastavitvi stara vrednost ne deluje več.
   const secret = req.headers.get("x-watchdog-secret");
-  if (secret !== "door-watchdog-2026-src") {
+  const expected = Deno.env.get("WATCHDOG_SECRET") || "door-watchdog-2026-src";
+  if (secret !== expected) {
     return new Response(JSON.stringify({ ok: false, error: "Unauthorized" }), {
       status: 401,
       headers: { ...CORS, "Content-Type": "application/json" },

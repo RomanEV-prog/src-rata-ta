@@ -4,7 +4,7 @@ import Link from "next/link";
 const BP = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 export const metadata: Metadata = {
-  title: "Obrazci in zakonodaja | ŠRC Ra-Ta-Ta",
+  title: "Obrazci in zakonodaja",
   description: "Prijavnica in pravila Zimske lige Fenix, izjava o zasebnosti ter zakonodaja o orožju.",
 };
 
