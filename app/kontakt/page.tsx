@@ -3,7 +3,9 @@
 import { useState, useEffect } from "react";
 
 const API = "https://rangeos-api.adlerhub.eu";
-const DNEVI = ["PONEDELJEK", "TOREK", "SREDA", "ČETRTEK", "PETEK", "SOBOTA", "NEDELJA"];
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+const DNEVI =["PONEDELJEK", "TOREK", "SREDA", "ČETRTEK", "PETEK", "SOBOTA", "NEDELJA"];
 const FALLBACK_HOURS = [
   { day: "PONEDELJEK", time: "ZAPRTO" },
   { day: "TOREK", time: "10:00–13:00 in 15:00–20:00" },
@@ -37,8 +39,11 @@ function apiToRows(days: RangeDay[]): { day: string; time: string }[] {
 }
 
 export default function KontaktPage() {
-  const [form, setForm] = useState({ ime: "", priimek: "", email: "", telefon: "", zadeva: "Paketi", sporocilo: "" });
+  // `website` je past za robote (skrito polje) — človek ga ne izpolni.
+  const [form, setForm] = useState({ ime: "", priimek: "", email: "", telefon: "", zadeva: "Paketi", sporocilo: "", website: "" });
   const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [err, setErr] = useState("");
   const [hours, setHours] = useState(FALLBACK_HOURS);
 
   useEffect(() => {
@@ -48,10 +53,28 @@ export default function KontaktPage() {
       .catch(() => {});
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: povežite z backend API
-    setSent(true);
+    setErr("");
+    setSending(true);
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/send-contact`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: SUPABASE_ANON,
+          Authorization: `Bearer ${SUPABASE_ANON}`,
+        },
+        body: JSON.stringify(form),
+      });
+      const body = await res.json().catch(() => ({ ok: false }));
+      if (res.ok && body.ok) setSent(true);
+      else setErr(body.message || "Pošiljanje ni uspelo. Pokličite nas na 041 207 997.");
+    } catch {
+      setErr("Pošiljanje ni uspelo. Preverite povezavo ali nas pokličite na 041 207 997.");
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -149,12 +172,25 @@ export default function KontaktPage() {
                       style={{ background: "#131720", border: "1px solid rgba(255,255,255,0.1)" }}
                     />
                   </div>
+                  {/* Past za robote: skrito pred ljudmi in bralniki zaslona */}
+                  <input
+                    type="text"
+                    name="website"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    aria-hidden="true"
+                    value={form.website}
+                    onChange={e => setForm(f => ({ ...f, website: e.target.value }))}
+                    style={{ position: "absolute", left: "-9999px", width: 1, height: 1, opacity: 0 }}
+                  />
+                  {err && <p className="text-sm" style={{ color: "#e07a7a" }}>{err}</p>}
                   <button
                     type="submit"
-                    className="w-full py-3 rounded-lg font-semibold text-white text-sm transition-all hover:brightness-110"
+                    disabled={sending}
+                    className="w-full py-3 rounded-lg font-semibold text-white text-sm transition-all hover:brightness-110 disabled:opacity-50"
                     style={{ background: "#7a8cc9" }}
                   >
-                    Pošlji
+                    {sending ? "Pošiljam…" : "Pošlji"}
                   </button>
                 </form>
               )}

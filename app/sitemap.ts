@@ -19,6 +19,7 @@ const routes = [
   "clanstvo",
   "clanstvo/sd-fenix",
   "news-events",
+  "obrazci-zakoni",
   "trgovina",
 ];
 

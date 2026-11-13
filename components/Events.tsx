@@ -2,30 +2,17 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { fetchNews, type NewsPost } from "@/lib/news";
 
-const eventCategories = [
-  {
-    title: "Prihajajoča izobraževanja",
-    color: "#3dba8a",
-    events: [
-      { title: "21.02.2026 08.30 – 14:00 in 22.02.2026 09:00 – 16:00", href: "/news-events" },
-    ],
-  },
-  {
-    title: "Tekmovanja",
-    color: "#e05c5c",
-    events: [
-      { title: "I. kolo Mednarodne strelske lige Alpe Adria – 22.3.2025 ob 07:00", href: "/news-events" },
-    ],
-  },
-  {
-    title: "Ostalo",
-    color: "#7a8cc9",
-    events: [
-      { title: "Zaključek Zimske lige Fenix 2024/25 – 7.3.2025 ob 18:00", href: "/news-events" },
-    ],
-  },
+// Seznam se polni iz objavljenih novic (admin → Novice), po kategorijah —
+// nič več ročno vpisanih vrstic, ki zastarajo.
+const SKUPINE = [
+  { kategorija: "izobraževanja", title: "Izobraževanja", color: "#3dba8a" },
+  { kategorija: "dogodki", title: "Tekmovanja in dogodki", color: "#e05c5c" },
+  { kategorija: "obvestila", title: "Obvestila", color: "#7a8cc9" },
+  { kategorija: "novosti", title: "Novosti", color: "#e67e22" },
 ];
+const NA_SKUPINO = 3;
 
 const DAYS = ["p", "t", "s", "č", "p", "s", "n"];
 
@@ -39,12 +26,19 @@ function getCalendarDays(year: number, month: number) {
 export default function Events() {
   const [current, setCurrent] = useState({ year: 2026, month: 10 });
   const [todayKey, setTodayKey] = useState<string | null>(null);
+  // null = nalagam, [] = ni objav / vir nedosegljiv
+  const [posts, setPosts] = useState<NewsPost[] | null>(null);
 
   useEffect(() => {
     const now = new Date();
     setCurrent({ year: now.getFullYear(), month: now.getMonth() });
     setTodayKey(`${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`);
+    fetchNews().then(n => setPosts(n ?? []));
   }, []);
+
+  const skupine = SKUPINE
+    .map(s => ({ ...s, events: (posts ?? []).filter(p => p.category === s.kategorija).slice(0, NA_SKUPINO) }))
+    .filter(s => s.events.length > 0);
 
   const { startOffset, daysInMonth } = getCalendarDays(current.year, current.month);
 
@@ -75,15 +69,28 @@ export default function Events() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
           {/* Event list */}
           <div className="space-y-8">
-            {eventCategories.map((cat) => (
-              <div key={cat.title}>
+            {posts === null && (
+              <div className="space-y-3 animate-pulse">
+                {[0, 1, 2].map(i => (
+                  <div key={i} className="h-4 rounded" style={{ background: "#1a1f2e", width: `${70 - i * 12}%` }} />
+                ))}
+              </div>
+            )}
+            {posts !== null && skupine.length === 0 && (
+              <p className="text-sm text-white/40">Trenutno ni napovedanih dogodkov.</p>
+            )}
+            {skupine.map((cat) => (
+              <div key={cat.kategorija}>
                 <h3 className="text-base font-bold mb-3" style={{ color: cat.color }}>
                   {cat.title}
                 </h3>
                 <ul className="space-y-1.5">
                   {cat.events.map((e) => (
-                    <li key={e.title}>
-                      <Link href={e.href} className="text-sm text-white/70 hover:text-white transition-colors">
+                    <li key={e.id}>
+                      <Link
+                        href={e.slug ? `/news-events?post=${encodeURIComponent(e.slug)}` : "/news-events"}
+                        className="text-sm text-white/70 hover:text-white transition-colors"
+                      >
                         {e.title}
                       </Link>
                     </li>
@@ -91,6 +98,11 @@ export default function Events() {
                 </ul>
               </div>
             ))}
+            {posts !== null && (
+              <Link href="/news-events" className="inline-block text-sm font-semibold hover:underline" style={{ color: "#7a8cc9" }}>
+                Vse novice in dogodki →
+              </Link>
+            )}
           </div>
 
           {/* Mini calendar */}

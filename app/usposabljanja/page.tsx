@@ -56,13 +56,13 @@ export default function UsposabljanjaPage() {
 
           <div className="rounded-xl p-6" style={{ background: "#131720", border: "1px solid rgba(255,255,255,0.07)" }}>
             <h3 className="font-bold text-white mb-3">Prihajajoči termini</h3>
-            <div className="space-y-3">
-              <div className="flex justify-between text-sm py-2 border-b border-white/5">
-                <span className="text-white/70">21.02.2026 – 22.02.2026</span>
-                <span style={{ color: "#3dba8a" }}>08:30 – 16:00</span>
-              </div>
-            </div>
-            <div className="mt-5">
+            <p className="text-sm text-white/60 leading-relaxed">
+              Aktualne termine usposabljanj in preizkusov znanja objavljamo med novicami.{" "}
+              <Link href="/news-events" className="font-semibold hover:underline" style={{ color: "#3dba8a" }}>
+                Poglej razpisane termine →
+              </Link>
+            </p>
+            <div className="mt-5 flex flex-wrap gap-3">
               <Link href="/kontakt" className="inline-block px-6 py-2.5 rounded-lg font-semibold text-white text-sm transition-all hover:brightness-110" style={{ background: "#7a8cc9" }}>
                 Prijava na usposabljanje
               </Link>

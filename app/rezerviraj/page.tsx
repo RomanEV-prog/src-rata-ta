@@ -345,7 +345,8 @@ export default function RezervacijaPage() {
                 className="py-3 rounded-xl font-semibold text-white text-sm text-center transition-all hover:brightness-110 border border-white/15"
                 style={{ background: '#1a1f2e' }}
               >📞 Pokliči</a>
-              <a href="https://play.google.com/store/apps/details?id=si.ratata.rangeos"
+              <a href="https://play.google.com/store/apps/details?id=com.rangeos.rangeos_mobile"
+                target="_blank" rel="noopener noreferrer"
                 className="py-3 rounded-xl font-semibold text-white text-sm text-center transition-all hover:brightness-110"
                 style={{ background: '#4f6bbd' }}
               >📱 Mobilna app</a>
