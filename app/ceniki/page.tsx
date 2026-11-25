@@ -1,9 +1,10 @@
 import PageHero from "@/components/PageHero";
+import PackagesPriceList from "@/components/PackagesPriceList";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Ceniki",
-  description: "Cenik najema strelnih linij, inštruktorja in usposabljanj na strelišču ŠRC Ra-Ta-Ta Maribor.",
+  description: "Cenik paketov streljanja, najema strelnih linij, inštruktorja in usposabljanj na strelišču ŠRC Ra-Ta-Ta Maribor.",
 };
 
 const CMS = "https://cms.strelisce-maribor.si/uploads";
@@ -43,6 +44,12 @@ export default function CenikiPage() {
 
       <section className="py-20" style={{ background: "#0d0f14" }}>
         <div className="max-w-3xl mx-auto px-4 sm:px-6">
+
+          {/* Paketi — isti vir kot /paketi (Supabase), zato vedno usklajeno */}
+          <div className="mb-14">
+            <h2 className="text-xl font-black text-white mb-6 tracking-wider">Paketi streljanja</h2>
+            <PackagesPriceList />
+          </div>
 
           {/* Strelišče */}
           <div className="mb-14">
