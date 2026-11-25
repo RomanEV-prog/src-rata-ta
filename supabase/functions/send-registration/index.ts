@@ -78,7 +78,14 @@ Deno.serve(async (req) => {
     }
 
     const filledBytes  = await pdfDoc.save()
-    const filledBase64 = btoa(String.fromCharCode(...new Uint8Array(filledBytes)))
+    // Base64 po kosih: razpršitev celega PDF-ja (~150 kB) v argumente ene same
+    // funkcije preseže sklad ("Maximum call stack size exceeded").
+    const bytes = new Uint8Array(filledBytes)
+    let binary = ''
+    for (let i = 0; i < bytes.length; i += 0x8000) {
+      binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000))
+    }
+    const filledBase64 = btoa(binary)
 
     // 3. Sestavi KRATKO telo — glavni dokument je priložena izpolnjena prijavnica.
     //    V telo gredo le podatki, ki jih na prijavnici NI (e-pošta, telefon …),
