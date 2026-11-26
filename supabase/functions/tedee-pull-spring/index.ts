@@ -104,6 +104,7 @@ Deno.serve(async (req) => {
 
   // MORA biti odprta, inače je error
   let isActuallyUnlocked = false;
+  let debugInfo = "";
   try {
     const verifyRes = await fetch(`${TEDEE_API}/my/lock/${lockId}`, {
       headers: { Authorization: `PersonalKey ${tedeeToken}` },
@@ -112,13 +113,19 @@ Deno.serve(async (req) => {
     if (verifyRes.ok) {
       const verifyData = await verifyRes.json();
       const verifyState = verifyData?.result?.lockProperties?.state;
+      debugInfo = `state=${verifyState}`;
       isActuallyUnlocked = verifyState === 2 || verifyState === 6;
+    } else {
+      debugInfo = `verifyRes NOT ok: ${verifyRes.status}`;
     }
   } catch (e) {
     // Verify pade - error
+    debugInfo = `verify exception: ${String(e)}`;
     await logEvent(supabaseUrl, serviceKey, "unknown", "error", "Verify failed: " + String(e), openedBy, groupId, groupName);
     return json({ success: false, message: "Ne mogu provjeriti stanje vrata." }, 502);
   }
+
+  console.log(`[TEDEE-DEBUG] After Pull Spring: ${debugInfo}, isActuallyUnlocked=${isActuallyUnlocked}`);
 
   // Ako vrata NISU odprta - ERROR
   if (!isActuallyUnlocked) {

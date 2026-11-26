@@ -5,7 +5,7 @@ import Footer from "@/components/Footer";
 
 export function NavbarWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const hideChrome = pathname?.startsWith("/dostop");
+  const hideChrome = pathname?.startsWith("/dostop") || pathname?.startsWith("/admin");
 
   return (
     <>

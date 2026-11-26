@@ -103,6 +103,20 @@ function NewsContent() {
           ) : (
             <p className="text-white/30 text-sm">Vsebina ni na voljo.</p>
           )}
+          {post.attachment_url && (
+            <a
+              href={post.attachment_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-8 inline-flex items-center gap-2.5 px-5 py-3 rounded-lg text-sm font-semibold text-white transition-all hover:brightness-110"
+              style={{ background: '#1a1f2e', border: '1px solid rgba(255,255,255,0.12)' }}
+            >
+              <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke={color} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              {post.attachment_name || 'Prenesi prilogo (PDF)'}
+            </a>
+          )}
           <div className="mt-12 pt-8 border-t border-white/10">
             <button
               onClick={() => router.push('/news-events')}

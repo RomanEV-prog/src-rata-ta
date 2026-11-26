@@ -7,6 +7,8 @@ export interface NewsPost {
   content: string | null
   category: string
   image_url: string | null
+  attachment_url?: string | null
+  attachment_name?: string | null
   slug: string | null
   published_at: number
 }
@@ -23,7 +25,7 @@ export async function fetchNews(): Promise<NewsPost[] | null> {
   try {
     const { data, error } = await supabase
       .from('news')
-      .select('id,title,excerpt,content,category,image_url,slug,published_at')
+      .select('id,title,excerpt,content,category,image_url,attachment_url,attachment_name,slug,published_at')
       .eq('is_published', true)
       .order('published_at', { ascending: false })
       .limit(50)
