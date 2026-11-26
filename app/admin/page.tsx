@@ -70,6 +70,11 @@ export default function AdminPage() {
   const [settingPass, setSettingPass] = useState(false)
   const [passMsg, setPassMsg] = useState('')
   const [showChangePass, setShowChangePass] = useState(false)
+  // Pozabljeno geslo: 'ask' = vpis e-naslova, 'code' = vpis kode iz mejla.
+  const [forgot, setForgot] = useState<'off' | 'ask' | 'code'>('off')
+  const [forgotCode, setForgotCode] = useState('')
+  const [forgotMsg, setForgotMsg] = useState('')
+  const [forgotBusy, setForgotBusy] = useState(false)
 
   const isSuper = SUPER_ADMIN !== '' && (session?.user?.email ?? '').toLowerCase() === SUPER_ADMIN
 
@@ -87,13 +92,42 @@ export default function AdminPage() {
     return () => sub.subscription.unsubscribe()
   }, [])
 
+  /** Pošlje mejl za obnovo gesla (povezava + koda). Ne razkrije, ali račun obstaja. */
+  async function sendRecovery() {
+    setForgotMsg('')
+    const addr = email.trim().toLowerCase()
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(addr)) { setForgotMsg('Napaka: vpiši svoj e-naslov.'); return }
+    setForgotBusy(true)
+    const { error } = await supabase.auth.resetPasswordForEmail(addr, { redirectTo: window.location.origin + '/admin/' })
+    setForgotBusy(false)
+    if (error) {
+      setForgotMsg(/rate limit|security purposes/i.test(error.message)
+        ? 'Napaka: mejl je bil pravkar poslan — počakaj minuto in poskusi znova.'
+        : 'Napaka: ' + error.message)
+      return
+    }
+    setForgotCode(''); setForgot('code')
+  }
+
+  /** Potrdi kodo iz mejla → prijava → zaslon »Nastavi geslo«. */
+  async function verifyRecoveryCode() {
+    setForgotMsg('')
+    const token = forgotCode.replace(/\D/g, '')
+    if (token.length < 6) { setForgotMsg('Napaka: vpiši kodo iz mejla.'); return }
+    setForgotBusy(true)
+    const { error } = await supabase.auth.verifyOtp({ email: email.trim().toLowerCase(), token, type: 'recovery' })
+    setForgotBusy(false)
+    if (error) { setForgotMsg('Napaka: koda ni pravilna ali je potekla. Zahtevaj nov mejl.'); return }
+    setForgot('off'); setForgotCode(''); setRecoveryMode(true)
+  }
+
   async function setPassword() {
     setPassMsg('')
     if (newPass.length < 8) { setPassMsg('Geslo mora imeti vsaj 8 znakov.'); return }
     if (newPass !== newPass2) { setPassMsg('Gesli se ne ujemata.'); return }
     setSettingPass(true)
     const { error } = await supabase.auth.updateUser({ password: newPass })
-    if (error) { setPassMsg('Napaka: ' + (error.message === 'Auth session missing!' ? 'povezava je potekla — prosi Romana za novo povabilo.' : error.message)); setSettingPass(false); return }
+    if (error) { setPassMsg('Napaka: ' + (error.message === 'Auth session missing!' ? 'povezava je potekla — na prijavi klikni »Pozabljeno geslo?« in zahtevaj nov mejl.' : error.message)); setSettingPass(false); return }
     setSettingPass(false)
     const wasChange = showChangePass
     setRecoveryMode(false); setShowChangePass(false); setNewPass(''); setNewPass2(''); setPassMsg('')
@@ -222,6 +256,36 @@ export default function AdminPage() {
     </div>
   )
 
+  // ---- POZABLJENO GESLO ----
+  if (!session && forgot !== 'off') return (
+    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#0d0f14' }}>
+      <div className="w-full max-w-sm p-8 rounded-2xl" style={{ background: '#131720', border: '1px solid rgba(255,255,255,0.08)' }}>
+        <h1 className="text-white font-black text-2xl mb-1 text-center">Pozabljeno geslo</h1>
+        {forgot === 'ask' ? (
+          <>
+            <p className="text-white/40 text-xs text-center mb-6">Vpiši e-naslov svojega računa. Poslali ti bomo mejl za nastavitev novega gesla.</p>
+            <div className="space-y-4">
+              <input type="email" placeholder="E-mail" value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendRecovery()} className={inp} style={inpStyle} />
+              {forgotMsg && <p className="text-red-400 text-xs">{forgotMsg}</p>}
+              <button onClick={sendRecovery} disabled={forgotBusy} className="w-full py-3 rounded-xl font-semibold text-white text-sm hover:brightness-110 disabled:opacity-50" style={{ background: '#4f6bbd' }}>{forgotBusy ? 'Pošiljam…' : 'Pošlji mejl'}</button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="text-white/40 text-xs text-center mb-6">Če račun <b className="text-white/60">{email.trim()}</b> obstaja, je mejl na poti (poglej tudi med vsiljeno pošto). Vpiši kodo iz mejla ali klikni povezavo v njem.</p>
+            <div className="space-y-4">
+              <input inputMode="numeric" autoComplete="one-time-code" placeholder="Koda iz mejla" value={forgotCode} onChange={e => setForgotCode(e.target.value)} onKeyDown={e => e.key === 'Enter' && verifyRecoveryCode()} className={inp + ' text-center tracking-widest'} style={inpStyle} />
+              {forgotMsg && <p className="text-red-400 text-xs">{forgotMsg}</p>}
+              <button onClick={verifyRecoveryCode} disabled={forgotBusy} className="w-full py-3 rounded-xl font-semibold text-white text-sm hover:brightness-110 disabled:opacity-50" style={{ background: '#4f6bbd' }}>{forgotBusy ? 'Preverjam…' : 'Potrdi kodo'}</button>
+              <button onClick={() => { setForgotMsg(''); setForgot('ask') }} className="w-full text-white/30 text-xs hover:text-white/60">Mejla ni — pošlji znova</button>
+            </div>
+          </>
+        )}
+        <button onClick={() => { setForgot('off'); setForgotMsg('') }} className="w-full text-white/30 text-xs hover:text-white/60 mt-4">← Nazaj na prijavo</button>
+      </div>
+    </div>
+  )
+
   if (!session) return (
     <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#0d0f14' }}>
       <div className="w-full max-w-sm p-8 rounded-2xl" style={{ background: '#131720', border: '1px solid rgba(255,255,255,0.08)' }}>
@@ -232,6 +296,7 @@ export default function AdminPage() {
           <input type="password" placeholder="Geslo" value={pass} onChange={e => setPass(e.target.value)} onKeyDown={e => e.key === 'Enter' && login()} className={inp} style={inpStyle} />
           {loginErr && <p className="text-red-400 text-xs">{loginErr}</p>}
           <button onClick={login} disabled={loggingIn} className="w-full py-3 rounded-xl font-semibold text-white text-sm hover:brightness-110 disabled:opacity-50" style={{ background: '#4f6bbd' }}>{loggingIn ? 'Prijavljam…' : 'Prijava'}</button>
+          <button onClick={() => { setForgotMsg(''); setForgot('ask') }} className="w-full text-white/40 text-xs hover:text-white/70 underline">Pozabljeno geslo?</button>
         </div>
       </div>
     </div>
