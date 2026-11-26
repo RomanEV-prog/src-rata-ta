@@ -23,7 +23,7 @@ function isoToMs(iso: string): number | null {
 export default function SdFenixPage() {
   const [form, setForm] = useState({
     first_name: '', last_name: '', email: '', phone: '',
-    date_of_birth: '', society: '', discipline: '', note: '',
+    date_of_birth: '', society: '', discipline: '', targets_qty: '', note: '',
     address: '', city: '', weapon_permit: '', permit_issuer: '',
     weapon_type: 'pištola', weapon_serial: '', weapon_owner: '', ammo_qty: '', ammo_owner: '',
   })
@@ -58,6 +58,10 @@ export default function SdFenixPage() {
     if (!form.first_name || !form.last_name || !form.email) {
       setErr('Ime, priimek in e-mail so obvezni.'); return
     }
+    const tarc = Number(form.targets_qty)
+    if (!Number.isInteger(tarc) || tarc < 1 || tarc > 50) {
+      setErr('Vpišite, koliko tarč želite rezervirati za ligo (celo število, vsaj 1).'); return
+    }
     if (!pravilaPrebrana) {
       setErr('Pred oddajo prijavnice morate potrditi, da ste prebrali pravila lige.'); return
     }
@@ -68,7 +72,13 @@ export default function SdFenixPage() {
         const r = await fetch(`${API}/public/league-registration`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...form, date_of_birth: isoToMs(form.date_of_birth) }),
+          // RangeOS nima svojega polja za tarče → zapišemo jih na začetek opombe,
+          // da jih osebje vidi v pregledu prijav.
+          body: JSON.stringify({
+            ...form,
+            note: [`Rezervacija tarč: ${tarc}`, form.note.trim()].filter(Boolean).join(' | '),
+            date_of_birth: isoToMs(form.date_of_birth),
+          }),
         })
         const b = await r.json()
         if (!b.ok) console.warn('rangeos-api:', b.message)
@@ -179,6 +189,11 @@ export default function SdFenixPage() {
                   <option value="">— izberi —</option>
                   {DISCIPLINE.map(d => <option key={d} value={d}>{d}</option>)}
                 </select>
+              </div>
+              <div className="sm:col-span-2">
+                <label className="text-xs text-white/40 mb-1 block">Koliko tarč želite rezervirati za ligo? *</label>
+                <input type="number" inputMode="numeric" min={1} max={50} step={1} value={form.targets_qty}
+                       onChange={e => set('targets_qty', e.target.value)} placeholder="npr. 2" className={inp} style={inpStyle} />
               </div>
               <div>
                 <label className="text-xs text-white/40 mb-1 block">Naslov (ulica in hišna št.)</label>

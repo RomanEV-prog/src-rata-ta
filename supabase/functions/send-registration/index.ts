@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json()
     const {
-      first_name, last_name, email, phone, date_of_birth, society, discipline, note,
+      first_name, last_name, email, phone, date_of_birth, society, discipline, targets_qty, note,
       address, city, weapon_permit, permit_issuer,
       weapon_type, weapon_serial, weapon_owner, ammo_qty, ammo_owner,
     } = body
@@ -102,6 +102,7 @@ Deno.serve(async (req) => {
       <b>Prijavitelj:</b> ${esc(first_name)} ${esc(last_name)}<br>
       <b>E-pošta:</b> ${esc(email)}<br>
       <b>Telefon:</b> ${esc(phone || '—')}<br>
+      <b>Rezervacija tarč:</b> ${esc(targets_qty || '—')}<br>
       <b>Datum rojstva:</b> ${esc(date_of_birth || '—')}${note ? `<br><b>Opomba:</b> ${esc(note)}` : ''}
     </p>
     <p style="margin:14px 0 0;font-size:12px;color:#999">Oddano: ${today} · strelisce-maribor.si · pravila potrjena ob oddaji</p>
